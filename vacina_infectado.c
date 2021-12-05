@@ -3,6 +3,42 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+typedef struct Ingrediente
+{
+	int disponivel;
+	//Laboratorio* pertence;
+
+}Ingrediente;
+
+
+
+//A bancada tera dois de cada ingrediente
+typedef struct Bancada
+{
+	Ingrediente* virus_morto;
+	Ingrediente* injecao;
+	Ingrediente* insumo_secreto;
+
+	/*
+	Para verificar se determinado ingrediente
+	esta disponivel.
+	*/
+	sem_t *s_virus_morto;
+	sem_t *s_injecao;
+	sem_t *s_insumo_secreto;
+
+
+	/*
+	Para ter controle dos ingredientes e informa aos respectivos laboratorios
+	a necessidade de renovacao de estoque
+	*/
+	//
+	//sem_t *s_lab_1;
+	//sem_t *s_lab_2;
+	//sem_t *s_lab_3;
+	//
+
+}Bancada;
 
 /*
 	Convencao para ingrediente: 
@@ -18,38 +54,20 @@ typedef struct Laboratorio
 	//ID que eu criei
 	int lab_num;
 
-    int ingrediente_1;
-    int ingrediente_2;
+	//
+    //Ingrediente* ingrediente_1;
+	//Ingrediente* ingrediente_2;
+    //int ingrediente_2;
+	//
 	int qtd_renova_estoque;
     sem_t *renova_estoque;
+
+	Bancada* bancada;
 	
 }Laboratorio;
 
-typedef struct Ingrediente
-{
-	//VM == 1, INJECAO == 2, IS == 3
-	int qual_ingrediente;
-	Laboratorio* pertence;
-
-}Ingrediente;
 
 
-//A bancada tera dois de cada ingrediente
-typedef struct Bancada
-{
-	Ingrediente* virus_morto;
-	Ingrediente* injecao;
-	Ingrediente* insumo_secreto;
-
-	/*
-	Para ter controle dos ingredientes e informa aos respectivos laboratorios
-	a necessidade de renovacao de estoque
-	*/
-	sem_t *s_lab_1;
-	sem_t *s_lab_2;
-	sem_t *s_lab_3;
-
-}Bancada;
 
 /*
 	Para cada ingrediente:
@@ -70,18 +88,96 @@ typedef struct Infectado
 	//ID que eu criei
 	int infec_num;
 
-    int virus_morto;
-    int injecao;
-    int insumo_secreto;
+	////
+    //int virus_morto;
+    //int injecao;
+    //int insumo_secreto;
+	////
+
 	int ingrediente_infinito;
-	int quantidade_vacinas_aplicadas;
+	int qtd_vacinas_aplicadas;
 	Bancada* bancada;
-    sem_t *usando_bancada;
-	pthread_mutex_t pegando_ingrediente;
+
+
+	///
+    //sem_t *usando_bancada;
+	///
+
+	pthread_mutex_t *mutex;
 
 }Infectado;
 
+/*
+void run_infectado(void *arg)
+{
+	//Captura o infectado
+	Infectado* infectado = (Infectado*) arg;
 
+	//Verifica qual ingreidente ele possui, e por consequencia, quais precisa
+	//1 == virus morto, 2 == injecao, 3 == insumo secreto
+	int possui_ingrediente = infectado->ingrediente_infinito;
+
+	//Precisa dos ingredientes 2 e 3
+	if(possui_ingrediente == 1)
+	{
+		//sem_wait(infectado->bancada->
+		//Verificar se possui na bancada os ingredientes que ele precisa
+		int possui_ing_2, possui_ing_3;
+
+		//pthread_mutex_lock(&mutex1);
+        //pthread_mutex_unlock(&mutex1);
+
+		//pthread_mutex_lock(infectado->mutex)
+		sem_get_value(infectado->bancada->s_injecao, &possui_ing_2);
+		sem_get_value(infectado->bancada->s_insumo_secreto, &possui_ing_3);
+		
+		if((possui_ing_2 > 0) && (possui_ing_3 > 0))
+		{
+			//Pegou os dois ingredientes
+			sem_wait(infectado->bancada->s_injecao);
+			sem_wait(infectado->bancada->s_insumo_secreto);
+
+			//Aplica a vacina
+			infectado->qtd_vacinas_aplicadas++;
+
+			//Verificar qual injecao foi pega
+			pthread_mutex_lock(&infectado->mutex);
+			if(infectado->bancada->injecao[0]->disponivel)
+			{	
+				//Informo que nao esta mais disponivel
+				infectado->bancada->injecao[0]->disponivel = 0;
+				//Informo ao laboratorio que o respectivo ingrediente foi consumido
+				sem_wait(infectado->bancada->injecao[0]->pertence->renova_estoque);
+			}
+			else
+			{
+				sem_wait(infectado->bancada->injecao[1]->pertence->renova_estoque);
+			}
+			//Verificar foi insumo secreto foi pego
+			
+			if(infectado->bancada->insumo_secreto[0] > 0)
+			{
+
+			}
+			
+			pthread_mutex_unlock(&infectado->mutex);
+
+
+
+		}
+	}
+	
+	else if(possui_ingrediente == 2)
+	{
+
+	}
+	else
+	{
+
+	}
+	
+}
+*/
 
 //Receber numero de tarefas por parametro
 int main()
