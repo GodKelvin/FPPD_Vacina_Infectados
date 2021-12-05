@@ -267,19 +267,30 @@ void *run_infectado(void *arg)
 	return NULL;
 }
 
+/*
+void *run_laboratori0(void *arg)
+{
+
+}
+*/
+
+
 //Receber numero de tarefas por parametro
 int main()
 {
-	//Quantidade de infectados e laboratorios
+	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
+	int qtd_ingredientes = 6;
 
 	//Quantidade de tarefas (receber por parametro in argv)
 	int qtd_tarefas = 5;
 
-	//Criando meus infectados e laboratorios
-	Infectado *infectados;
-	Laboratorio *laboratorios;
+	/*-----ALOCANDO AS RESPECTIVAS MEMORIAS-----*/
+	Infectado *infectados;		//TAM 3
+	Laboratorio *laboratorios;	//TAM 3
+	Bancada* bancada;			//TAM 1
+	Ingrediente *ingredientes;	//TAM 6 (2 pra cada laboratorio)
 
 	infectados = malloc(sizeof(Infectado) * qtd_infectados);
 	if(infectados == NULL)
@@ -295,7 +306,23 @@ int main()
 		return -2;
 	}
 
-	/*-----Criando os semaforos e mutexes-----*/
+	bancada = malloc(sizeof(Bancada));
+	if(bancada == NULL)
+	{
+		printf("ERRO AO CRIAR BANCADA\n");
+		return -3;
+	}
+
+	ingredientes = malloc(sizeof(Ingrediente) * qtd_ingredientes);
+	if(ingredientes == NULL)
+	{
+		printf("ERRO AO CRIAR INGREDIENTES\n");
+		return -4;
+	}
+	/*-----FIM DA ALOCACAO DE MEMORIA-----*/
+
+
+	/*-----CRIANDO SEMAFOROS E MUTEXES-----*/
 	//Semafaros de acesso aos ingredientes
 	sem_t s_acesso_injecao, s_acesso_virus_morto, s_acesso_insumo;
 
@@ -317,7 +344,9 @@ int main()
 	sem_init(&s_renova_lab_1, 0, 0);
 	sem_init(&s_renova_lab_2, 0, 0);
 	sem_init(&s_renova_lab_3, 0, 0);
-	/*-----Fim criacao de semaforos e mutexes-----*/
+	/*-----FIM DA CRIACAO DE SEMAFOROS E MUTEXES-----*/
+
+	
 
 
 
