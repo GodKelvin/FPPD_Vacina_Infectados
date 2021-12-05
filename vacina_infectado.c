@@ -12,7 +12,7 @@ struct Ingrediente
 {
 	int disponivel;
 	//int id_lab_pertence;
-	Laboratorio* pertence;
+	Laboratorio* pertence_lab;
 
 };
 
@@ -58,8 +58,8 @@ struct Laboratorio
 	int lab_id;
 
 	//
-    //Ingrediente* ingrediente_1;
-	//Ingrediente* ingrediente_2;
+    Ingrediente* ingrediente_1;
+	Ingrediente* ingrediente_2;
     //int ingrediente_2;
 	//
 	int qtd_renova_estoque;
@@ -140,30 +140,31 @@ void run_infectado(void *arg)
 			infectado->qtd_vacinas_aplicadas++;
 
 			//Verificar qual injecao foi pega
-			pthread_mutex_lock(&infectado->mutex);
-			if(infectado->bancada->injecao[0]->disponivel)
+			pthread_mutex_lock(infectado->mutex);
+			if(infectado->bancada->injecao[0].disponivel)
 			{	
-				//Informo que nao esta mais disponivel
-				infectado->bancada->injecao[0]->disponivel = 0;
+				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+				infectado->bancada->injecao[0].disponivel = 0;
 				//Informo ao laboratorio que o respectivo ingrediente foi consumido
-				sem_wait(infectado->bancada->injecao[0]->pertence->renova_estoque);
+				sem_wait(&infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
-				sem_wait(infectado->bancada->injecao[1]->pertence->renova_estoque);
+				infectado->bancada->injecao[1].disponivel = 0;
+				sem_wait(&infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 			}
-			//Verificar foi insumo secreto foi pego
-			/*
-			if(infectado->bancada->insumo_secreto[0] > 0)
+			//Verificar qual insumo secreto foi pego
+			if(infectado->bancada->insumo_secreto[0].disponivel)
 			{
-
+				infectado->bancada->insumo_secreto[0].disponivel = 0;
+				sem_wait(&infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
 			}
-			*/
-			
-			pthread_mutex_unlock(&infectado->mutex);
-
-
-
+			else
+			{
+				infectado->bancada->insumo_secreto[1].disponivel = 0;
+				sem_wait(&infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+			}
+			pthread_mutex_unlock(infectado->mutex);
 		}
 	}
 	
