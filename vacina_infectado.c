@@ -114,19 +114,20 @@ void *run_infectado(void *arg)
 
 	//Verifica qual ingreidente ele possui, e por consequencia, quais precisa
 	//1 == virus morto, 2 == injecao, 3 == insumo secreto
-	int possui_ingrediente = infectado->ingrediente_infinito;
-
-	//Precisa dos ingredientes 2 e 3
-	if(possui_ingrediente == 1)
+	//Precisa dos ingredientes 2 e 3 (injecao e insumo secreto)
+	if(infectado->ingrediente_infinito == 1)
 	{
 		//Verificar se possui na bancada os ingredientes que ele precisa
-		int possui_ing_2, possui_ing_3;
+		int qtd_injecao, qtd_insumo_secreto;
 
-		//pthread_mutex_lock(infectado->mutex)
-		sem_getvalue(infectado->bancada->s_injecao, &possui_ing_2);
-		sem_getvalue(infectado->bancada->s_insumo_secreto, &possui_ing_3);
+		//Verificar se pelo menos possui um ingrediente de cada disponivel
+		//---VERIFICAR SE ESSES DOIS MUTEXES DE GETVALUE SAO NECESSARIOS-------------------
+		pthread_mutex_lock(infectado->mutex);
+		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
+		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
+		pthread_mutex_unlock(infectado->mutex);
 		
-		if((possui_ing_2 > 0) && (possui_ing_3 > 0))
+		if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
 		{
 			//Pegou os dois ingredientes
 			sem_wait(infectado->bancada->s_injecao);
@@ -164,17 +165,106 @@ void *run_infectado(void *arg)
 		}
 	}
 
-	//Precisa dos ingredientes 1 e 3
-	else if(possui_ingrediente == 2)
+	//Precisa dos ingredientes 1 e 3 (virus morto e insumo secreto)
+	else if(infectado->ingrediente_infinito == 2)
 	{
 		//Verificar se possui na bancada os ingredientes que ele precisa
-		int possui_ing_1, possui_ing_3;
+		int qtd_virus_morto, qtd_insumo_secreto;
 
-		//pthread_mutex_lock(infectado->mutex)
-		sem_getvalue(infectado->bancada->s_injecao, &possui_ing_1);
-		sem_getvalue(infectado->bancada->s_insumo_secreto, &possui_ing_3);
+		pthread_mutex_lock(infectado->mutex);
+		sem_getvalue(infectado->bancada->s_virus_morto, &qtd_virus_morto);
+		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
+		pthread_mutex_unlock(infectado->mutex);
+
+		if((qtd_virus_morto > 0) && (qtd_insumo_secreto > 0))
+		{
+			//Pegou os dois ingredientes
+			sem_wait(infectado->bancada->s_virus_morto);
+			sem_wait(infectado->bancada->s_insumo_secreto);
+
+			//Aplica a vacina
+			infectado->qtd_vacinas_aplicadas++;
+
+			//Verificar qual virus_morto foi pega
+			pthread_mutex_lock(infectado->mutex);
+			if(infectado->bancada->virus_morto[0].disponivel)
+			{	
+				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+				infectado->bancada->virus_morto[0].disponivel = 0;
+				//Informo ao laboratorio que o respectivo ingrediente foi consumido
+				sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+			}
+			else
+			{
+				infectado->bancada->virus_morto[1].disponivel = 0;
+				sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+			}
+			//Verificar qual insumo secreto foi pego
+			if(infectado->bancada->insumo_secreto[0].disponivel)
+			{
+				infectado->bancada->insumo_secreto[0].disponivel = 0;
+				sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+			}
+			else
+			{
+				infectado->bancada->insumo_secreto[1].disponivel = 0;
+				sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+			}
+			pthread_mutex_unlock(infectado->mutex);
+		}
+	}
+	//ELSE?
+	//Precisa dos ingredientes 1 e 2 (virus morto e injecao)
+	else if(infectado->ingrediente_infinito == 3)
+	{
+		//Verificar se possui na bancada os ingredientes que ele precisa
+		//---REFATORAR PARA "POSSUI_INJECAO // ...."
+		int qtd_virus_morto, qtd_injecao;
+
+		pthread_mutex_lock(infectado->mutex);
+		sem_getvalue(infectado->bancada->s_virus_morto, &qtd_virus_morto);
+		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
+		pthread_mutex_unlock(infectado->mutex);
+
+		if((qtd_virus_morto > 0) && (qtd_injecao > 0))
+		{
+			//Pegou os dois ingredientes
+			sem_wait(infectado->bancada->s_virus_morto);
+			sem_wait(infectado->bancada->s_injecao);
+
+			//Aplica a vacina
+			infectado->qtd_vacinas_aplicadas++;
+
+			//Verificar qual virus_morto foi pega
+			pthread_mutex_lock(infectado->mutex);
+			if(infectado->bancada->virus_morto[0].disponivel)
+			{	
+				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+				infectado->bancada->virus_morto[0].disponivel = 0;
+				//Informo ao laboratorio que o respectivo ingrediente foi consumido
+				sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+			}
+			else
+			{
+				infectado->bancada->virus_morto[1].disponivel = 0;
+				sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+			}
+			//Verificar qual injecao secreto foi pega
+			if(infectado->bancada->injecao[0].disponivel)
+			{
+				infectado->bancada->injecao[0].disponivel = 0;
+				sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+			}
+			else
+			{
+				infectado->bancada->injecao[1].disponivel = 0;
+				sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+			}
+			pthread_mutex_unlock(infectado->mutex);
+		}
 	}
 	
+	return NULL;
 }
 
 //Receber numero de tarefas por parametro
