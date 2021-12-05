@@ -107,7 +107,7 @@ struct Infectado
 };
 
 
-void run_infectado(void *arg)
+void *run_infectado(void *arg)
 {
 	//Captura o infectado
 	Infectado* infectado = (Infectado*) arg;
@@ -119,12 +119,8 @@ void run_infectado(void *arg)
 	//Precisa dos ingredientes 2 e 3
 	if(possui_ingrediente == 1)
 	{
-		//sem_wait(infectado->bancada->
 		//Verificar se possui na bancada os ingredientes que ele precisa
 		int possui_ing_2, possui_ing_3;
-
-		//pthread_mutex_lock(&mutex1);
-        //pthread_mutex_unlock(&mutex1);
 
 		//pthread_mutex_lock(infectado->mutex)
 		sem_getvalue(infectado->bancada->s_injecao, &possui_ing_2);
@@ -167,17 +163,18 @@ void run_infectado(void *arg)
 			pthread_mutex_unlock(infectado->mutex);
 		}
 	}
-	
-	/*
+
+	//Precisa dos ingredientes 1 e 3
 	else if(possui_ingrediente == 2)
 	{
+		//Verificar se possui na bancada os ingredientes que ele precisa
+		int possui_ing_1, possui_ing_3;
 
+		//pthread_mutex_lock(infectado->mutex)
+		sem_getvalue(infectado->bancada->s_injecao, &possui_ing_1);
+		sem_getvalue(infectado->bancada->s_insumo_secreto, &possui_ing_3);
 	}
-	else
-	{
-
-	}
-	*/
+	
 }
 
 //Receber numero de tarefas por parametro
