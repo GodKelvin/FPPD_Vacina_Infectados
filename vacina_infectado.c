@@ -146,23 +146,23 @@ void run_infectado(void *arg)
 				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
 				infectado->bancada->injecao[0].disponivel = 0;
 				//Informo ao laboratorio que o respectivo ingrediente foi consumido
-				sem_wait(&infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
 				infectado->bancada->injecao[1].disponivel = 0;
-				sem_wait(&infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 			}
 			//Verificar qual insumo secreto foi pego
 			if(infectado->bancada->insumo_secreto[0].disponivel)
 			{
 				infectado->bancada->insumo_secreto[0].disponivel = 0;
-				sem_wait(&infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
 				infectado->bancada->insumo_secreto[1].disponivel = 0;
-				sem_wait(&infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 			}
 			pthread_mutex_unlock(infectado->mutex);
 		}

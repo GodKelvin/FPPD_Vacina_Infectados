@@ -1,3 +1,7 @@
+```
+gcc -Wall -pedantic vacina_infectado.c -pthread -lrt -o exec
+```
+
 # FPPD_Vacina_Infectados
 Trabalho realizado durante a disciplina de Fundamentos de Programação Paralela e Distribuída.
 
