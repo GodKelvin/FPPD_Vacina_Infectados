@@ -3,17 +3,21 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-typedef struct Ingrediente
+typedef struct Ingrediente Ingrediente;
+typedef struct Bancada Bancada;
+typedef struct Laboratorio Laboratorio;
+typedef struct Infectado Infectado;
+
+struct Ingrediente
 {
 	int disponivel;
-	//Laboratorio* pertence;
+	//int id_lab_pertence;
+	Laboratorio* pertence;
 
-}Ingrediente;
-
-
+};
 
 //A bancada tera dois de cada ingrediente
-typedef struct Bancada
+struct Bancada
 {
 	Ingrediente* virus_morto;
 	Ingrediente* injecao;
@@ -38,7 +42,7 @@ typedef struct Bancada
 	//sem_t *s_lab_3;
 	//
 
-}Bancada;
+};
 
 /*
 	Convencao para ingrediente: 
@@ -46,13 +50,12 @@ typedef struct Bancada
 		2 == injecao
 		3 == insumo_secreto
 */
-typedef struct Laboratorio
+struct Laboratorio
 {
-	//ID proprio
-	pthread_t lab_id;
+	pthread_t lab_id_proprio;
 
 	//ID que eu criei
-	int lab_num;
+	int lab_id;
 
 	//
     //Ingrediente* ingrediente_1;
@@ -62,12 +65,9 @@ typedef struct Laboratorio
 	int qtd_renova_estoque;
     sem_t *renova_estoque;
 
-	Bancada* bancada;
+	//Bancada* bancada;
 	
-}Laboratorio;
-
-
-
+};
 
 /*
 	Para cada ingrediente:
@@ -80,13 +80,12 @@ typedef struct Laboratorio
 		3 == insumo_secreto
 */
 //----------------Alterar tamanho das variaveis? (long ing, long long int?)
-typedef struct Infectado
+struct Infectado
 {
-	//ID proprio
-	pthread_t infec_id;
+	pthread_t infec_id_proprio;
 
 	//ID que eu criei
-	int infec_num;
+	int infec_id;
 
 	////
     //int virus_morto;
@@ -105,9 +104,9 @@ typedef struct Infectado
 
 	pthread_mutex_t *mutex;
 
-}Infectado;
+};
 
-/*
+
 void run_infectado(void *arg)
 {
 	//Captura o infectado
@@ -128,8 +127,8 @@ void run_infectado(void *arg)
         //pthread_mutex_unlock(&mutex1);
 
 		//pthread_mutex_lock(infectado->mutex)
-		sem_get_value(infectado->bancada->s_injecao, &possui_ing_2);
-		sem_get_value(infectado->bancada->s_insumo_secreto, &possui_ing_3);
+		sem_getvalue(infectado->bancada->s_injecao, &possui_ing_2);
+		sem_getvalue(infectado->bancada->s_insumo_secreto, &possui_ing_3);
 		
 		if((possui_ing_2 > 0) && (possui_ing_3 > 0))
 		{
@@ -154,11 +153,12 @@ void run_infectado(void *arg)
 				sem_wait(infectado->bancada->injecao[1]->pertence->renova_estoque);
 			}
 			//Verificar foi insumo secreto foi pego
-			
+			/*
 			if(infectado->bancada->insumo_secreto[0] > 0)
 			{
 
 			}
+			*/
 			
 			pthread_mutex_unlock(&infectado->mutex);
 
@@ -167,6 +167,7 @@ void run_infectado(void *arg)
 		}
 	}
 	
+	/*
 	else if(possui_ingrediente == 2)
 	{
 
@@ -175,9 +176,8 @@ void run_infectado(void *arg)
 	{
 
 	}
-	
+	*/
 }
-*/
 
 //Receber numero de tarefas por parametro
 int main()
