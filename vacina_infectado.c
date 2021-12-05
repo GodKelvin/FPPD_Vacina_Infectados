@@ -322,7 +322,10 @@ int main()
 	/*-----FIM DA ALOCACAO DE MEMORIA-----*/
 
 
-	/*-----CRIANDO SEMAFOROS E MUTEXES-----*/
+	/*-----CRIANDO SEMAFOROS E MUTEX-----*/
+	pthread_mutex_t mutex;
+	pthread_mutex_init(&mutex, NULL);
+
 	//Semafaros de acesso aos ingredientes
 	sem_t s_acesso_injecao, s_acesso_virus_morto, s_acesso_insumo;
 
@@ -370,6 +373,7 @@ int main()
 		infectados[i].ingrediente_infinito = i+1;
 		infectados[i].qtd_vacinas_aplicadas = 0;
 		infectados[i].bancada = bancada;
+		infectados[i].mutex = &mutex;
 	}
 
 	for(i = 0, j = 0; i < qtd_ingredientes; i++)
@@ -405,7 +409,8 @@ int main()
 	/*-----FIM DA ASSOCIACAO DAS ESTRUTURAS-----*/
 
 
-
+	printf("TESTES\n");
+	printf("ING DISPONIVEL: %d, %d\n", bancada->virus_morto[0].disponivel, laboratorios->bancada->virus_morto[0].disponivel);
 
 
 
