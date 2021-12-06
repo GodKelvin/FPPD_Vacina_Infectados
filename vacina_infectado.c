@@ -115,24 +115,32 @@ void *run_infectado(void *arg)
 	//Verifica qual ingrediente ele possui, e por consequencia, quais precisa
 	//1 == virus morto, 2 == injecao, 3 == insumo secreto
 	//Precisa dos ingredientes 2 e 3 (injecao e insumo secreto)
+	printf("OPA 1\n");
 	if(infectado->ingrediente_infinito == 1)
 	{
+		printf("OPA 1.2\n");
 		//Verificar se possui na bancada os ingredientes que ele precisa
 		int qtd_injecao, qtd_insumo_secreto;
 
 		//Verificar se pelo menos possui um ingrediente de cada disponivel
 		//---VERIFICAR SE ESSES DOIS MUTEXES DE GETVALUE SAO NECESSARIOS-------------------
 		pthread_mutex_lock(infectado->mutex);
+		printf("OPA 1.3\n");
 		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
+		printf("OPA 1.4\n");
+		printf("VALUE %d\n", qtd_injecao);
 		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
-		pthread_mutex_unlock(infectado->mutex);
+		printf("OPA 1.5\n");
 		
+		printf("OPA 2\n");
 		if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
 		{
+			printf("OPA 3\n");
 			//Pegou os dois ingredientes
 			sem_wait(infectado->bancada->s_injecao);
 			sem_wait(infectado->bancada->s_insumo_secreto);
-
+			pthread_mutex_unlock(infectado->mutex);
+			printf("OPA 4\n");
 			//Aplica a vacina
 			infectado->qtd_vacinas_aplicadas++;
 
@@ -140,29 +148,43 @@ void *run_infectado(void *arg)
 			pthread_mutex_lock(infectado->mutex);
 			if(infectado->bancada->injecao[0].disponivel)
 			{	
+				printf("OPA 5\n");
 				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
 				infectado->bancada->injecao[0].disponivel = 0;
 				//Informo ao laboratorio que o respectivo ingrediente foi consumido
-				sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
+				printf("OPA 6\n");
 				infectado->bancada->injecao[1].disponivel = 0;
-				sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			//Verificar qual insumo secreto foi pego
 			if(infectado->bancada->insumo_secreto[0].disponivel)
 			{
+				printf("OPA 7\n");
 				infectado->bancada->insumo_secreto[0].disponivel = 0;
-				sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
+				printf("OPA 8\n");
 				infectado->bancada->insumo_secreto[1].disponivel = 0;
-				sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			pthread_mutex_unlock(infectado->mutex);
 		}
+		//Se nao tiver os dois ingredientes disponiveis
+		else
+		{
+			pthread_mutex_unlock(infectado->mutex);
+		}
+		
 	}
 
 	//Precisa dos ingredientes 1 e 3 (virus morto e insumo secreto)
@@ -267,12 +289,26 @@ void *run_infectado(void *arg)
 	return NULL;
 }
 
-/*
+
+//Iniciar qtd_renova_estoque em 1?
 void *run_laboratori0(void *arg)
 {
+	Laboratorio* laboratorio = (Laboratorio*) arg;
 
+	//Verificar id do laboratorio
+	if(laboratorio->id_lab == 1)
+	{
+		sem_wait(laboratorio->renova_estoque);
+		sem_wait(laboratorio->renova_estoque);
+		//Renovou estoque
+		laboratorio->qtd_renova_estoque++;
+
+		//Os ingredientes gerados por esse laboratorio
+		laboratorio->bancada->virus[0].disponivel = 1
+		laboratorio->bancada->injecao[1].disponivel = 1
+	}
 }
-*/
+
 
 
 //Receber numero de tarefas por parametro
@@ -344,13 +380,13 @@ int main()
 	Como de inicio todos os ingredientes estarao abastecidos,
 	inicia a renovacao de cada estoque em 2 (ou 0?).
 	*/
-	//sem_init(&s_renova_lab_1, 0, 0);
-	//sem_init(&s_renova_lab_2, 0, 0);
-	//sem_init(&s_renova_lab_3, 0, 0);
+	sem_init(&s_renova_lab_1, 0, 0);
+	sem_init(&s_renova_lab_2, 0, 0);
+	sem_init(&s_renova_lab_3, 0, 0);
 
-	sem_init(&s_renova_lab_1, 0, 2);
-	sem_init(&s_renova_lab_2, 0, 2);
-	sem_init(&s_renova_lab_3, 0, 2);
+	//sem_init(&s_renova_lab_1, 0, 2);
+	//sem_init(&s_renova_lab_2, 0, 2);
+	//sem_init(&s_renova_lab_3, 0, 2);
 	/*-----FIM DA CRIACAO DE SEMAFOROS E MUTEXES-----*/
 
 	/*-----ASSOCIANDO AS ESTRUTURAS CRIADAS-----*/
@@ -390,6 +426,10 @@ int main()
 	bancada->insumo_secreto = malloc(sizeof(Ingrediente) * 2);
 	/*---FIM DA CRIACAO DOS ESPACOS DOS INGREDIENTES NA BANCADA---*/
 
+	/*---ASSOCIANDO OS SEMAFOROS---*/
+	bancada->s_injecao = &s_acesso_injecao;
+	bancada->s_virus_morto = &s_acesso_virus_morto;
+	bancada->s_insumo_secreto = &s_acesso_insumo;
 	//Informando a bancada quais ingredientes possuem o que
 	//Ingredientes que possuem virus morto
 	//Laboratorios 1 & 2
@@ -411,6 +451,27 @@ int main()
 
 	printf("TESTES\n");
 	printf("ING DISPONIVEL: %d, %d\n", bancada->virus_morto[0].disponivel, laboratorios->bancada->virus_morto[0].disponivel);
+
+	//Teste de create
+	for(i = 0; i < qtd_infectados; i++)
+	{
+		//printf("OPA\n");
+		if(pthread_create(&infectados[i].infec_id_proprio, NULL, run_infectado, &infectados[i]) != 0)
+		{
+			perror("Pthread Create falhou\n");
+			exit(1);
+		}
+	}
+
+	for(i = 0; i < qtd_infectados; i++)
+    {
+        if(pthread_join(infectados[i].infec_id_proprio, NULL) != 0)
+        {
+            perror("Pthread_join falhou\n");
+            exit(1);
+        }
+    }
+	
 
 
 
