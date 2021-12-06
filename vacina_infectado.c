@@ -115,32 +115,22 @@ void *run_infectado(void *arg)
 	//Verifica qual ingrediente ele possui, e por consequencia, quais precisa
 	//1 == virus morto, 2 == injecao, 3 == insumo secreto
 	//Precisa dos ingredientes 2 e 3 (injecao e insumo secreto)
-	printf("OPA 1\n");
 	if(infectado->ingrediente_infinito == 1)
 	{
-		printf("OPA 1.2\n");
 		//Verificar se possui na bancada os ingredientes que ele precisa
 		int qtd_injecao, qtd_insumo_secreto;
 
 		//Verificar se pelo menos possui um ingrediente de cada disponivel
 		//---VERIFICAR SE ESSES DOIS MUTEXES DE GETVALUE SAO NECESSARIOS-------------------
 		pthread_mutex_lock(infectado->mutex);
-		printf("OPA 1.3\n");
 		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
-		printf("OPA 1.4\n");
-		printf("VALUE %d\n", qtd_injecao);
 		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
-		printf("OPA 1.5\n");
-		
-		printf("OPA 2\n");
 		if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
 		{
-			printf("OPA 3\n");
 			//Pegou os dois ingredientes
 			sem_wait(infectado->bancada->s_injecao);
 			sem_wait(infectado->bancada->s_insumo_secreto);
 			pthread_mutex_unlock(infectado->mutex);
-			printf("OPA 4\n");
 			//Aplica a vacina
 			infectado->qtd_vacinas_aplicadas++;
 
@@ -148,7 +138,6 @@ void *run_infectado(void *arg)
 			pthread_mutex_lock(infectado->mutex);
 			if(infectado->bancada->injecao[0].disponivel)
 			{	
-				printf("OPA 5\n");
 				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
 				infectado->bancada->injecao[0].disponivel = 0;
 				//Informo ao laboratorio que o respectivo ingrediente foi consumido
@@ -157,7 +146,6 @@ void *run_infectado(void *arg)
 			}
 			else
 			{
-				printf("OPA 6\n");
 				infectado->bancada->injecao[1].disponivel = 0;
 				//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
@@ -165,14 +153,12 @@ void *run_infectado(void *arg)
 			//Verificar qual insumo secreto foi pego
 			if(infectado->bancada->insumo_secreto[0].disponivel)
 			{
-				printf("OPA 7\n");
 				infectado->bancada->insumo_secreto[0].disponivel = 0;
 				//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 			}
 			else
 			{
-				printf("OPA 8\n");
 				infectado->bancada->insumo_secreto[1].disponivel = 0;
 				//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
@@ -196,13 +182,13 @@ void *run_infectado(void *arg)
 		pthread_mutex_lock(infectado->mutex);
 		sem_getvalue(infectado->bancada->s_virus_morto, &qtd_virus_morto);
 		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
-		pthread_mutex_unlock(infectado->mutex);
 
 		if((qtd_virus_morto > 0) && (qtd_insumo_secreto > 0))
 		{
 			//Pegou os dois ingredientes
 			sem_wait(infectado->bancada->s_virus_morto);
 			sem_wait(infectado->bancada->s_insumo_secreto);
+			pthread_mutex_unlock(infectado->mutex);
 
 			//Aplica a vacina
 			infectado->qtd_vacinas_aplicadas++;
@@ -234,6 +220,10 @@ void *run_infectado(void *arg)
 			}
 			pthread_mutex_unlock(infectado->mutex);
 		}
+		else
+		{
+			pthread_mutex_unlock(infectado->mutex);
+		}
 	}
 	//ELSE?
 	//Precisa dos ingredientes 1 e 2 (virus morto e injecao)
@@ -246,14 +236,13 @@ void *run_infectado(void *arg)
 		pthread_mutex_lock(infectado->mutex);
 		sem_getvalue(infectado->bancada->s_virus_morto, &qtd_virus_morto);
 		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
-		pthread_mutex_unlock(infectado->mutex);
 
 		if((qtd_virus_morto > 0) && (qtd_injecao > 0))
 		{
 			//Pegou os dois ingredientes
 			sem_wait(infectado->bancada->s_virus_morto);
 			sem_wait(infectado->bancada->s_injecao);
-
+			pthread_mutex_unlock(infectado->mutex);
 			//Aplica a vacina
 			infectado->qtd_vacinas_aplicadas++;
 
@@ -282,6 +271,10 @@ void *run_infectado(void *arg)
 				infectado->bancada->injecao[1].disponivel = 0;
 				sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 			}
+			pthread_mutex_unlock(infectado->mutex);
+		}
+		else
+		{
 			pthread_mutex_unlock(infectado->mutex);
 		}
 	}
