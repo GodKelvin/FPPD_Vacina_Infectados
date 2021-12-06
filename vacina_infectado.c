@@ -306,6 +306,8 @@ void *run_laboratori0(void *arg)
 		//Os ingredientes gerados por esse laboratorio
 		laboratorio->bancada->virus[0].disponivel = 1
 		laboratorio->bancada->injecao[1].disponivel = 1
+
+		//post nos semaforos de bancada de acordo com o ingrediente que produz
 	}
 }
 
