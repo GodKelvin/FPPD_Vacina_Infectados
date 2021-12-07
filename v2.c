@@ -92,9 +92,9 @@ struct Infectado
 	int infec_id;
 
 	////
-    //int virus_morto;
-    //int injecao;
-    //int insumo_secreto;
+    int virus_morto;
+    int injecao;
+    int insumo_secreto;
 	////
 
 	int ingrediente_infinito;
@@ -139,63 +139,79 @@ void *run_infectado(void *arg)
 		//WHILE N TIVER APLICADO A QUANTIDADE MINIMA DE VACINAS EM SI MESMO == LOOP
 		//TAB ->>>>>
 		//Verificar se possui na bancada os ingredientes que ele precisa
-		int qtd_injecao, qtd_insumo_secreto;
+		//int qtd_injecao, qtd_insumo_secreto;
 
 		//Verificar se pelo menos possui um ingrediente de cada disponivel
 		//---VERIFICAR SE ESSES DOIS MUTEXES DE GETVALUE SAO NECESSARIOS-------------------
-		pthread_mutex_lock(infectado->mutex);
-		sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
-		sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
+		//sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
+		//sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
+
+		//pthread_mutex_lock(infectado->mutex);
+
+		//Verificar retorno dos dois usando sem_trywait?
+		
 
 		//Semaforos
 		//--if((infectado->bancada->injecao[0].disponivel || infectado->bancada->injecao[1].disponivel) && 
 		//(infectado->bancada->insumo_secreto[0].disponivel || infectado->bancada->insumo_secreto[1].disponivel))
 		//--else, aviso aos respectivos labs que nao tem ingrediente?
-		if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
-		{
+		//if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
+		//{
 			//Pegou os dois ingredientes
-			sem_wait(infectado->bancada->s_injecao);
-			sem_wait(infectado->bancada->s_insumo_secreto);
-			pthread_mutex_unlock(infectado->mutex);
+			//sem_wait(infectado->bancada->s_injecao);
+			//sem_wait(infectado->bancada->s_insumo_secreto);
+			//pthread_mutex_unlock(infectado->mutex);
 			//Aplica a vacina
-			infectado->qtd_vacinas_aplicadas++;
 
-			//Verificar qual injecao foi pega
-			pthread_mutex_lock(infectado->mutex);
-			if(infectado->bancada->injecao[0].disponivel)
-			{	
-				//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
-				infectado->bancada->injecao[0].disponivel = 0;
-				//Informo ao laboratorio que o respectivo ingrediente foi consumido
-				//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-			}
-			else
-			{
-				infectado->bancada->injecao[1].disponivel = 0;
-				//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
-				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-			}
-			//Verificar qual insumo secreto foi pego
-			if(infectado->bancada->insumo_secreto[0].disponivel)
-			{
-				infectado->bancada->insumo_secreto[0].disponivel = 0;
-				//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
-				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-			}
-			else
-			{
-				infectado->bancada->insumo_secreto[1].disponivel = 0;
-				//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
-				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-			}
-			pthread_mutex_unlock(infectado->mutex);
+
+		
+
+		sem_wait(infectado->bancada->s_injecao);
+		//Verificar qual injecao pegar
+		pthread_mutex_lock(infectado->mutex);
+		if(infectado->bancada->injecao[0].disponivel)
+		{	
+			infectado->injecao = 1;
+			//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+			infectado->bancada->injecao[0].disponivel = 0;
+			//Informo ao laboratorio que o respectivo ingrediente foi consumido
+			//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+			sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 		}
-		//Se nao tiver os dois ingredientes disponiveis
+		else if(infectado->bancada->injecao[1].disponivel)
+		{
+			infectado->injecao = 1;
+			infectado->bancada->injecao[1].disponivel = 0;
+			//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+			sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+		}
+		//Informa que a injecao nao pode ser pega
 		else
 		{
-			pthread_mutex_unlock(infectado->mutex);
+			sem_post(infectado->bancada->s_injecao);
 		}
+
+		sem_wait(infectado->bancada->s_insumo_secreto);
+		//Verificar qual insumo secreto pegar
+		if(infectado->bancada->insumo_secreto[0].disponivel)
+		{
+			infectado->bancada->insumo_secreto[0].disponivel = 0;
+			//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+			sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+		}
+		else
+		{
+			infectado->bancada->insumo_secreto[1].disponivel = 0;
+			//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+			sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+		}
+		pthread_mutex_unlock(infectado->mutex);
+		//}
+		//Se nao tiver os dois ingredientes disponiveis
+		//else
+		//{
+		//	pthread_mutex_unlock(infectado->mutex);
+		//}
 
 		if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
 		{
