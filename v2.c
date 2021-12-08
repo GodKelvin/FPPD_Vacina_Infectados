@@ -212,19 +212,7 @@ void *run_infectado(void *arg)
 			{
 				//Informo que este infectado ja se vaciou o suficiente
 				infectado->trabalho[0] = 1;
-			}
-			//Se conseguiu pegar os ingredientes necessarios
-			/*
-			if(infectado->injecao && infectado->insumo_secreto)
-			{
-				infectado->qtd_vacinas_aplicadas++;
-				//E por consequencia, utiliza os ingredientes
-				infectado->injecao = 0;
-				infectado->insumo_secreto = 0;
-			}else if()
-			*/
-
-			
+			}			
 		}
 		/*
 		else
