@@ -87,6 +87,7 @@ int run_and_work(int *trabalho)
 	for(int i = 0; i < 6; i++)
 	{
 		//Alguem ainda nao trabalhou o suficiente
+        printf("i == %d -> %d\n", i, trabalho[i]);
 		if(trabalho[i] == 0) return 1;
 	}
 
@@ -104,6 +105,7 @@ void *run_infectado(void *arg)
 	//Verifica qual ingrediente ele possui, e por consequencia, quais precisa
 	//1 == virus morto, 2 == injecao, 3 == insumo secreto
 	//Precisa dos ingredientes 2 e 3 (injecao e insumo secreto)
+    
 	if(infectado->ingrediente_infinito == 1)
 	{
 		/*
@@ -119,7 +121,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_trywait(infectado->bancada->s_injecao) && !sem_trywait(infectado->bancada->s_insumo_secreto))
+			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual injecao secreto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -157,6 +159,7 @@ void *run_infectado(void *arg)
 				//Se o mesmo ja se vacinou o suficiente
 				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
+                    printf("raitin1111111111111111111111\n");
 					//Informo que este infectado ja se vaciou o suficiente
 					infectado->trabalho[0] = 1;
 				}			
@@ -180,7 +183,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_trywait(infectado->bancada->s_virus_morto) && !sem_trywait(infectado->bancada->s_insumo_secreto))
+			if(!sem_wait(infectado->bancada->s_virus_morto) && !sem_wait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual virus morto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -218,6 +221,7 @@ void *run_infectado(void *arg)
 				//Se o mesmo ja se vacinou o suficiente
 				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
+                    printf("raiti22222222222222222222222222\n");
 					//Informo que este infectado ja se vaciou o suficiente
 					infectado->trabalho[1] = 1;
 				}			
@@ -241,7 +245,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_trywait(infectado->bancada->s_injecao) && !sem_trywait(infectado->bancada->s_virus_morto))
+			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_virus_morto))
 			{
 				//Verificar qual virus morto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -279,13 +283,14 @@ void *run_infectado(void *arg)
 				//Se o mesmo ja se vacinou o suficiente
 				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
+                    printf("ratin333333333333333333333333333\n");
 					//Informo que este infectado ja se vaciou o suficiente
 					infectado->trabalho[2] = 1;
 				}			
 			}
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 
@@ -294,10 +299,11 @@ void *run_laboratorio(void *arg)
 {
 	Laboratorio* laboratorio = (Laboratorio*) arg;
 
+
 	//Verificar id do laboratorio
 	if(laboratorio->lab_id == 0)
 	{
-
+        printf("lab 1: %d\n", laboratorio->trabalho[3]);
 		while(run_and_work(laboratorio->trabalho))
 		{
 			//Estocar os produtos DESTE lab
@@ -314,6 +320,7 @@ void *run_laboratorio(void *arg)
 
 			if(laboratorio->qtd_renova_estoque >= laboratorio->qtd_min_renova_restoque)
 			{
+                printf("OPaaaaa1111111111111111111\n");
 				laboratorio->trabalho[3] = 1;
 			}
 
@@ -324,6 +331,7 @@ void *run_laboratorio(void *arg)
 	}
 	else if(laboratorio->lab_id == 1)
 	{
+        printf("lab 2: %d\n", laboratorio->trabalho[4]);
 		while(run_and_work(laboratorio->trabalho))
 		{
 			//Estocar os produtos DESTE lab
@@ -340,6 +348,7 @@ void *run_laboratorio(void *arg)
 
 			if(laboratorio->qtd_renova_estoque >= laboratorio->qtd_min_renova_restoque)
 			{
+                printf("opaaaaaaa22222222222222222\n");
 				laboratorio->trabalho[4] = 1;
 			}
 			printf("LAB 2 ESTOCOU E ESTAO NO AGUARDO\n");
@@ -349,6 +358,7 @@ void *run_laboratorio(void *arg)
 	}
 	else
 	{
+        printf("lab 3: %d\n", laboratorio->trabalho[5]);
 		while(run_and_work(laboratorio->trabalho))
 		{
 			//Estocar os produtos DESTE lab
@@ -365,6 +375,7 @@ void *run_laboratorio(void *arg)
 
 			if(laboratorio->qtd_renova_estoque >= laboratorio->qtd_min_renova_restoque)
 			{
+                printf("opaaaaa33333333333333333333333\n");
 				laboratorio->trabalho[5] = 1;
 			}
 			printf("LAB 3 ESTOCOU E ESTAO NO AGUARDO\n");
@@ -373,7 +384,7 @@ void *run_laboratorio(void *arg)
 		}
 	}
 
-	return NULL;
+	return 0;
 }
 
 
@@ -382,7 +393,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 5;
+	int num_trabalho_minimo = 1;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
@@ -457,6 +468,7 @@ int main()
 		laboratorios[i].qtd_renova_estoque = 0;
 		laboratorios[i].bancada = bancada;
 		laboratorios[i].mutex = &mutex_reestocando_ingrediente;
+        laboratorios[i].qtd_min_renova_restoque = num_trabalho_minimo;
 	}
 
 	//Associando os respectivos semaforos aos respectivos labs
@@ -471,6 +483,7 @@ int main()
 		infectados[i].qtd_vacinas_aplicadas = 0;
 		infectados[i].bancada = bancada;
 		infectados[i].mutex = &mutex_acesso_ingrediente;
+        infectados[i].qtd_min_vacinas_aplicadas = num_trabalho_minimo;
 	}
 
 	for(i = 0, j = 0; i < qtd_ingredientes; i++)
@@ -508,6 +521,7 @@ int main()
 	bancada->insumo_secreto[1] = ingredientes[5];
 
 	int trabalho_minimo[6];
+    /*
 	if(num_trabalho_minimo < 1)
 	{
 		//Entao todos ja realizaram o trabalho minimo (0x)
@@ -522,17 +536,35 @@ int main()
 		{
 			trabalho_minimo[i] = 0;
 		}
-	}
+	}*/
+
+
+    /*
+    trabalho_minimo[0] = 1;
+    trabalho_minimo[1] = 1;
+    trabalho_minimo[2] = 1;
+    trabalho_minimo[3] = 1;
+    trabalho_minimo[4] = 1;
+    trabalho_minimo[5] = 1;
+    */
+    
+    trabalho_minimo[0] = 0;
+    trabalho_minimo[1] = 0;
+    trabalho_minimo[2] = 0;
+    trabalho_minimo[3] = 0;
+    trabalho_minimo[4] = 0;
+    trabalho_minimo[5] = 0;
+    
 
 	/*Associando os respectivos infectados e laboratorios 
 	a suas posicoes no vetor de trabalho minimo */
-	infectados[0].trabalho = &trabalho_minimo[0];
-	infectados[1].trabalho = &trabalho_minimo[1];
-	infectados[2].trabalho = &trabalho_minimo[2];
+	infectados[0].trabalho = trabalho_minimo;
+	infectados[1].trabalho = trabalho_minimo;
+	infectados[2].trabalho = trabalho_minimo;
 
-	laboratorios[0].trabalho = &trabalho_minimo[3];
-	laboratorios[1].trabalho = &trabalho_minimo[4];
-	laboratorios[2].trabalho = &trabalho_minimo[5];
+	laboratorios[0].trabalho = trabalho_minimo;
+	laboratorios[1].trabalho = trabalho_minimo;
+	laboratorios[2].trabalho = trabalho_minimo;
 
 	/*-----FIM DA ASSOCIACAO DAS ESTRUTURAS-----*/
 
