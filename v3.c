@@ -10,6 +10,7 @@ typedef struct Infectado Infectado;
 
 struct Ingrediente
 {
+    //0 ou 1
 	int disponivel;
 	Laboratorio* pertence_lab;
 
@@ -18,6 +19,7 @@ struct Ingrediente
 //A bancada tera dois de cada ingrediente
 struct Bancada
 {
+    //0, 1
 	Ingrediente* virus_morto;
 	Ingrediente* injecao;
 	Ingrediente* insumo_secreto;
@@ -45,7 +47,10 @@ struct Laboratorio
 	int lab_id;
 	int qtd_renova_estoque;
 	int qtd_min_renova_restoque;
+
+    //3, 4, 5
 	int *trabalho;
+
     sem_t *renova_estoque;
 
 	Bancada* bancada;
@@ -69,6 +74,8 @@ struct Infectado
 	int ingrediente_infinito;
 	int qtd_vacinas_aplicadas;
 	int qtd_min_vacinas_aplicadas;
+
+    //0, 1, 2
 	int *trabalho;
 	Bancada* bancada;
 	pthread_mutex_t *mutex;
@@ -112,7 +119,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_insumo_secreto))
+			if(!sem_trywait(infectado->bancada->s_injecao) && !sem_trywait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual injecao secreto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -173,7 +180,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_wait(infectado->bancada->s_virus_morto) && !sem_wait(infectado->bancada->s_insumo_secreto))
+			if(!sem_trywait(infectado->bancada->s_virus_morto) && !sem_trywait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual virus morto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -234,7 +241,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_virus_morto))
+			if(!sem_trywait(infectado->bancada->s_injecao) && !sem_trywait(infectado->bancada->s_virus_morto))
 			{
 				//Verificar qual virus morto pegar
 				pthread_mutex_lock(infectado->mutex);
@@ -288,7 +295,7 @@ void *run_laboratorio(void *arg)
 	Laboratorio* laboratorio = (Laboratorio*) arg;
 
 	//Verificar id do laboratorio
-	if(laboratorio->lab_id == 1)
+	if(laboratorio->lab_id == 0)
 	{
 
 		while(run_and_work(laboratorio->trabalho))
@@ -315,7 +322,7 @@ void *run_laboratorio(void *arg)
 			sem_wait(laboratorio->renova_estoque);
 		}
 	}
-	else if(laboratorio->lab_id == 2)
+	else if(laboratorio->lab_id == 1)
 	{
 		while(run_and_work(laboratorio->trabalho))
 		{
@@ -384,7 +391,7 @@ int main()
 	/*-----ALOCANDO AS RESPECTIVAS MEMORIAS-----*/
 	Infectado *infectados;		//TAM 3
 	Laboratorio *laboratorios;	//TAM 3
-	Bancada* bancada;			//TAM 1
+	Bancada *bancada;			//TAM 1
 	Ingrediente *ingredientes;	//TAM 6 (2 pra cada laboratorio)
 
 	infectados = malloc(sizeof(Infectado) * qtd_infectados);
@@ -468,7 +475,7 @@ int main()
 
 	for(i = 0, j = 0; i < qtd_ingredientes; i++)
 	{
-		ingredientes[i].disponivel = 1;
+		ingredientes[i].disponivel = 0;
 		ingredientes[i].pertence_lab = &laboratorios[j];
 
 		if(i % 2 != 0) j++;
