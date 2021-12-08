@@ -183,7 +183,7 @@ void *run_infectado(void *arg)
 				else if(infectado->bancada->virus_morto[1].disponivel)
 				{
 					infectado->bancada->virus_morto[1].disponivel = 0;
-					sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
 				}
 				pthread_mutex_unlock(infectado->mutex);
 
@@ -242,7 +242,7 @@ void *run_infectado(void *arg)
 				else if(infectado->bancada->virus_morto[1].disponivel)
 				{
 					infectado->bancada->virus_morto[1].disponivel = 0;
-					sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
 				}
 				pthread_mutex_unlock(infectado->mutex);
 
