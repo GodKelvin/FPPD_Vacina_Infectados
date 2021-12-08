@@ -228,7 +228,7 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_injecao))
+			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_virus_morto))
 			{
 				//Verificar qual virus morto pegar
 				pthread_mutex_lock(infectado->mutex);
