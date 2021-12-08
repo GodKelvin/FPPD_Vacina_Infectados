@@ -422,8 +422,8 @@ int main()
 	//Semaforos de renovacao dos estoques dos laboratorios
 	sem_t s_renova_lab_1, s_renova_lab_2, s_renova_lab_3;
 
-	/*Como a bancada terah dois de cada ingrediente disponivel,
-	inicia cada acesso com 2.*/
+	/* Iniciando com 0 pois os laboratorios irao informar
+	quando estocarem os ingredientes */
 	sem_init(&s_acesso_injecao, 0, 0);
 	sem_init(&s_acesso_virus_morto, 0, 0);
 	sem_init(&s_acesso_insumo, 0, 0);
