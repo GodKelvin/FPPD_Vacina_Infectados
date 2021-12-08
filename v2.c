@@ -165,8 +165,16 @@ void *run_infectado(void *arg)
 
 
 		
-
-		sem_wait(infectado->bancada->s_injecao);
+		if(sem_trywait(infectado->bancada->s_injecao)== 0 && sem_trywait(infectado->bancada->s_insumo_secreto) == 0)
+		{
+			//Pego os ingredientes, verificando o lab etc
+		}
+		else
+		{
+			sem_wait(infectado->bancada->s_injecao);
+			sem_wait(infectado->bancada->s_insumo_secreto);
+		}
+		//sem_wait(infectado->bancada->s_injecao);
 		//Verificar qual injecao pegar
 		pthread_mutex_lock(infectado->mutex);
 		if(infectado->bancada->injecao[0].disponivel)
@@ -191,7 +199,7 @@ void *run_infectado(void *arg)
 			sem_post(infectado->bancada->s_injecao);
 		}
 
-		sem_wait(infectado->bancada->s_insumo_secreto);
+		//sem_wait(infectado->bancada->s_insumo_secreto);
 		//Verificar qual insumo secreto pegar
 		if(infectado->bancada->insumo_secreto[0].disponivel)
 		{
