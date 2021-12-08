@@ -7,11 +7,11 @@ int main()
     sem_t s1, s2;
 
     sem_init(&s1, 0, 1);
-    sem_init(&s2, 0, 1);
+    sem_init(&s2, 0, 0);
 
     //NEGAR O SEMAFORO
     //
-    if(!sem_wait(&s1) && !sem_wait(&s2))
+    if(!sem_wait(&s1) || !sem_wait(&s2))
     {
         int value1, value2;
         printf("SAPORRA FUNCIONA\n");
