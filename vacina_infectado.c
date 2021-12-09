@@ -12,12 +12,13 @@ typedef struct Infectado Infectado;
 struct Ingrediente
 {
 	int disponivel;
-	//int id_lab_pertence;
 	Laboratorio* pertence_lab;
 
 };
 
-//A bancada tera dois de cada ingrediente
+/*A bancada tera dois de cada ingrediente.
+0 == Nao possui ingrediente
+1 == Possui ingrediente*/
 struct Bancada
 {
 	Ingrediente* virus_morto;
@@ -31,59 +32,30 @@ struct Bancada
 	sem_t *s_virus_morto;
 	sem_t *s_injecao;
 	sem_t *s_insumo_secreto;
-
-
-	/*
-	Para ter controle dos ingredientes e informa aos respectivos laboratorios
-	a necessidade de renovacao de estoque
-	*/
-	//
-	//sem_t *s_lab_1;
-	//sem_t *s_lab_2;
-	//sem_t *s_lab_3;
-	//
-
 };
 
-/*
-	Convencao para ingrediente: 
-		1 == virus_morto
-		2 == injecao
-		3 == insumo_secreto
-*/
 struct Laboratorio
 {
 	pthread_t lab_id_proprio;
 
 	//ID que eu criei
 	int lab_id;
-
-	//
-    //Ingrediente* ingrediente_1;
-	//Ingrediente* ingrediente_2;
-    //int ingrediente_2;
-	//
 	int qtd_renova_estoque;
 	int qtd_min_renova_restoque;
+
+	/*Vetor de trabalho compartilhado com os infectados, 
+	porem, cada um sabe sua posicao*/
 	int *trabalho;
     sem_t *renova_estoque;
-
 	Bancada* bancada;
-
 	pthread_mutex_t *mutex;
 	
 };
 
-/*
-	Para cada ingrediente:
-		0 == Nao possui ingrediente
-		1 == Possui ingrediente
-
-	Para verificar o ingrediente_infinito:
-		1 == virus_morto
-		2 == injecao
-		3 == insumo_secreto
-*/
+/*Para verificar o ingrediente_infinito:
+1 == virus_morto
+2 == injecao
+3 == insumo_secreto*/
 //----------------Alterar tamanho das variaveis? (long ing, long long int?)
 struct Infectado
 {
@@ -94,6 +66,9 @@ struct Infectado
 	int ingrediente_infinito;
 	int qtd_vacinas_aplicadas;
 	int qtd_min_vacinas_aplicadas;
+
+	/*Vetor de trabalho compartilhado com os laboratorios, 
+	porem, cada um sabe sua posicao*/
 	int *trabalho;
 	Bancada* bancada;
 	pthread_mutex_t *mutex;
@@ -136,16 +111,20 @@ void *run_infectado(void *arg)
 
 			if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
 			{
-				if(!run_and_work(infectado->trabalho))
-				{
-					printf("INFEC 1 no break\n");
-					//sleep(60);
-					break;
-				}
+				
 				printf("INFEC 1 CONSEGUIU!\n");
 				//Pegou os dois ingredientes
 				sem_wait(infectado->bancada->s_injecao);
 				sem_wait(infectado->bancada->s_insumo_secreto);
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("INFEC 1 no break\n");
+					//sleep(60);
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
+					break;
+				}
 				//pthread_mutex_unlock(infectado->mutex);
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
@@ -185,12 +164,14 @@ void *run_infectado(void *arg)
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[0] = 1;
 				}
-			}
-			//Se nao tiver os dois ingredientes disponiveis
-			else
-			{
-				//pthread_mutex_unlock(infectado->mutex);
-				printf("INFEC 1 nao conseguiu\n");
+
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("INFEC 1 avisando que acabou\n");
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
+				}
 			}
 		}
 	}
@@ -211,17 +192,20 @@ void *run_infectado(void *arg)
 
 			if((qtd_virus_morto > 0) && (qtd_insumo_secreto > 0))
 			{
+				//Pegou os dois ingredientes
+				sem_wait(infectado->bancada->s_virus_morto);
+				sem_wait(infectado->bancada->s_insumo_secreto);
+				//pthread_mutex_unlock(infectado->mutex);
 				if(!run_and_work(infectado->trabalho))
 				{
 					printf("INFEC 2 no break\n");
 					//printf("INFEC 2 dormindo!\n");
 					//sleep(60);
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
 					break;
 				}
-				//Pegou os dois ingredientes
-				sem_wait(infectado->bancada->s_virus_morto);
-				sem_wait(infectado->bancada->s_insumo_secreto);
-				//pthread_mutex_unlock(infectado->mutex);
 
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
@@ -259,14 +243,16 @@ void *run_infectado(void *arg)
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[1] = 1;
 				}
-			}
-			else
-			{
-				//pthread_mutex_unlock(infectado->mutex);
-				printf("INFEC 2 nao conseguiu\n");
+
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("INFEC 2 avisando que acabou\n");
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
+				}
 			}
 		}
-		
 	}
 	//Precisa dos ingredientes 1 e 2 (virus morto e injecao)
 	//else if(infectado->ingrediente_infinito == 3)
@@ -286,13 +272,6 @@ void *run_infectado(void *arg)
 
 			if((qtd_virus_morto > 0) && (qtd_injecao > 0))
 			{
-				if(!run_and_work(infectado->trabalho))
-				{
-					printf("INFEC 3 no break\n");
-					//printf("INFEC 3 dormindo!\n");
-					//sleep(60);
-					break;
-				}
 				printf("INFEC 3 CONSEGUIU!\n");
 				//Pegou os dois ingredientes
 				sem_wait(infectado->bancada->s_virus_morto);
@@ -300,8 +279,18 @@ void *run_infectado(void *arg)
 				//pthread_mutex_unlock(infectado->mutex);
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
-
-				//Verificar qual virus_morto foi pega
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("INFEC 3 no break\n");
+					//printf("INFEC 3 dormindo!\n");
+					//sleep(60);
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
+					break;
+				}
+	
+				//Verificar qual virus_morto foi pego
 				pthread_mutex_lock(infectado->mutex);
 				if(infectado->bancada->virus_morto[0].disponivel)
 				{	
@@ -333,13 +322,15 @@ void *run_infectado(void *arg)
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[2] = 1;
 				}
-			}
-			else
-			{
-				//pthread_mutex_unlock(infectado->mutex);
-				printf("INFEC 3 nao conseguiu\n");
-			}
 
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("INFEC 3 avisando que acabou\n");
+					sem_post(infectado->bancada->s_virus_morto);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_injecao);
+				}
+			}
 		}
 	}
 	
@@ -366,10 +357,11 @@ void *run_laboratorio(void *arg)
 				pthread_mutex_lock(laboratorio->mutex);
 				laboratorio->bancada->virus_morto[0].disponivel = 1;
 				laboratorio->bancada->injecao[0].disponivel = 1;
+				pthread_mutex_unlock(laboratorio->mutex);
+
 				//Avisar que foi estocado
 				sem_post(laboratorio->bancada->s_virus_morto);
 				sem_post(laboratorio->bancada->s_injecao);
-				pthread_mutex_unlock(laboratorio->mutex);
 
 				//Renovou estoque
 				laboratorio->qtd_renova_estoque++;
@@ -383,10 +375,11 @@ void *run_laboratorio(void *arg)
 				if(!run_and_work(laboratorio->trabalho))
 				{
 					printf("LAB 1 avisando que acabou\n");
-					pthread_mutex_lock(laboratorio->mutex);
+					//pthread_mutex_lock(laboratorio->mutex);
 					sem_post(laboratorio->bancada->s_virus_morto);
 					sem_post(laboratorio->bancada->s_injecao);
-					pthread_mutex_unlock(laboratorio->mutex);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					//pthread_mutex_unlock(laboratorio->mutex);
 					//printf("LAB 1 dormindo!\n");
 					//sleep(60);
 				}
@@ -407,10 +400,10 @@ void *run_laboratorio(void *arg)
 				pthread_mutex_lock(laboratorio->mutex);
 				laboratorio->bancada->insumo_secreto[0].disponivel = 1;
 				laboratorio->bancada->virus_morto[1].disponivel = 1;
+				pthread_mutex_unlock(laboratorio->mutex);
 				//Avisar que foi estocado
 				sem_post(laboratorio->bancada->s_insumo_secreto);
 				sem_post(laboratorio->bancada->s_virus_morto);
-				pthread_mutex_unlock(laboratorio->mutex);
 
 				//Renovou estoque
 				laboratorio->qtd_renova_estoque++;
@@ -424,10 +417,11 @@ void *run_laboratorio(void *arg)
 				if(!run_and_work(laboratorio->trabalho))
 				{
 					printf("LAB 2 avisando que acabou\n");
-					pthread_mutex_lock(laboratorio->mutex);
+					//pthread_mutex_lock(laboratorio->mutex);
 					sem_post(laboratorio->bancada->s_insumo_secreto);
 					sem_post(laboratorio->bancada->s_virus_morto);
-					pthread_mutex_unlock(laboratorio->mutex);
+					sem_post(laboratorio->bancada->s_injecao);
+					//pthread_mutex_unlock(laboratorio->mutex);
 					//printf("LAB 2 dormindo!\n");
 					//sleep(60);
 				}
@@ -448,10 +442,12 @@ void *run_laboratorio(void *arg)
 				pthread_mutex_lock(laboratorio->mutex);
 				laboratorio->bancada->injecao[1].disponivel = 1;
 				laboratorio->bancada->insumo_secreto[1].disponivel = 1;
+				pthread_mutex_unlock(laboratorio->mutex);
 				//Avisar que foi estocado
+
 				sem_post(laboratorio->bancada->s_injecao);
 				sem_post(laboratorio->bancada->s_insumo_secreto);
-				pthread_mutex_unlock(laboratorio->mutex);
+				//pthread_mutex_unlock(laboratorio->mutex);
 
 				//Renovou estoque
 				laboratorio->qtd_renova_estoque++;
@@ -464,10 +460,11 @@ void *run_laboratorio(void *arg)
 				if(!run_and_work(laboratorio->trabalho))
 				{
 					printf("LAB 3 avisando que acabou\n");
-					pthread_mutex_lock(laboratorio->mutex);
+					//pthread_mutex_lock(laboratorio->mutex);
 					sem_post(laboratorio->bancada->s_injecao);
 					sem_post(laboratorio->bancada->s_insumo_secreto);
-					pthread_mutex_unlock(laboratorio->mutex);
+					sem_post(laboratorio->bancada->s_virus_morto);
+					//pthread_mutex_unlock(laboratorio->mutex);
 
 					//printf("LAB 3 dormindo!\n");
 					//sleep(60);
@@ -488,7 +485,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 100;
+	int num_trabalho_minimo = 1;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
@@ -616,7 +613,6 @@ int main()
 	bancada->insumo_secreto[1] = ingredientes[5];
 
 	int trabalho_minimo[6];
-    /*
 	if(num_trabalho_minimo < 1)
 	{
 		//Entao todos ja realizaram o trabalho minimo (0x)
@@ -631,8 +627,7 @@ int main()
 		{
 			trabalho_minimo[i] = 0;
 		}
-	}*/
-
+	}
 
     /*
     trabalho_minimo[0] = 1;
@@ -643,13 +638,14 @@ int main()
     trabalho_minimo[5] = 1;
     */
     
+	/*
     trabalho_minimo[0] = 0;
     trabalho_minimo[1] = 0;
     trabalho_minimo[2] = 0;
     trabalho_minimo[3] = 0;
     trabalho_minimo[4] = 0;
     trabalho_minimo[5] = 0;
-    
+    */
 
 	/*Associando os respectivos infectados e laboratorios 
 	a suas posicoes no vetor de trabalho minimo */
@@ -709,6 +705,16 @@ int main()
 			printf("ERROR NO JOIN DOS LABS\n");
 			return -3;
 		}
+	}
+
+	for(i = 0; i < qtd_infectados; i++)
+	{
+		printf("Infectado %d: %d\n", infectados[i].infec_id, infectados[i].qtd_vacinas_aplicadas);
+	}
+
+	for(i = 0; i < qtd_laboratorios; i++)
+	{
+		printf("Laboratorio %d: %d\n", laboratorios[i].lab_id, laboratorios[i].qtd_renova_estoque);
 	}
 	
 
