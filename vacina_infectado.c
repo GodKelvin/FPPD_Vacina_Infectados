@@ -393,7 +393,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 1;
+	int num_trabalho_minimo = 0;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
@@ -537,24 +537,6 @@ int main()
 			trabalho_minimo[i] = 0;
 		}
 	}
-
-    /*
-    trabalho_minimo[0] = 1;
-    trabalho_minimo[1] = 1;
-    trabalho_minimo[2] = 1;
-    trabalho_minimo[3] = 1;
-    trabalho_minimo[4] = 1;
-    trabalho_minimo[5] = 1;
-    */
-    
-	/*
-    trabalho_minimo[0] = 0;
-    trabalho_minimo[1] = 0;
-    trabalho_minimo[2] = 0;
-    trabalho_minimo[3] = 0;
-    trabalho_minimo[4] = 0;
-    trabalho_minimo[5] = 0;
-    */
 
 	/*Associando os respectivos infectados e laboratorios 
 	a suas posicoes no vetor de trabalho minimo */
