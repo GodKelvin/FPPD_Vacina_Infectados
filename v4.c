@@ -107,6 +107,7 @@ void *run_infectado(void *arg)
             if((!sem_wait(infectado->bancada->s_injecao[0])) || (!sem_wait(infectado->bancada->s_injecao[1]))
                 && (!sem_wait(infectado->bancada->s_insumo_secreto[0]) || (!sem_wait(infectado->bancada->s_insumo_secreto[1]))))
 
+            
 			if((!sem_wait(infectado->bancada->s_injecao[0])) ||  && !sem_wait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual injecao secreto pegar

@@ -123,6 +123,8 @@ void *run_infectado(void *arg)
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
+
+			
 			sem_wait(infectado->bancada->s_injecao);
 			sem_wait(infectado->bancada->s_insumo_secreto);
 			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_insumo_secreto))
