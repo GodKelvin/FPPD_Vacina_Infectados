@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <unistd.h>
 
 typedef struct Ingrediente Ingrediente;
 typedef struct Bancada Bancada;
@@ -138,6 +139,7 @@ void *run_infectado(void *arg)
 				if(!run_and_work(infectado->trabalho))
 				{
 					printf("INFEC 1 no break\n");
+					//sleep(60);
 					break;
 				}
 				printf("INFEC 1 CONSEGUIU!\n");
@@ -187,7 +189,8 @@ void *run_infectado(void *arg)
 			//Se nao tiver os dois ingredientes disponiveis
 			else
 			{
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
+				printf("INFEC 1 nao conseguiu\n");
 			}
 		}
 	}
@@ -211,6 +214,8 @@ void *run_infectado(void *arg)
 				if(!run_and_work(infectado->trabalho))
 				{
 					printf("INFEC 2 no break\n");
+					//printf("INFEC 2 dormindo!\n");
+					//sleep(60);
 					break;
 				}
 				//Pegou os dois ingredientes
@@ -257,7 +262,8 @@ void *run_infectado(void *arg)
 			}
 			else
 			{
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
+				printf("INFEC 2 nao conseguiu\n");
 			}
 		}
 		
@@ -283,6 +289,8 @@ void *run_infectado(void *arg)
 				if(!run_and_work(infectado->trabalho))
 				{
 					printf("INFEC 3 no break\n");
+					//printf("INFEC 3 dormindo!\n");
+					//sleep(60);
 					break;
 				}
 				printf("INFEC 3 CONSEGUIU!\n");
@@ -320,7 +328,7 @@ void *run_infectado(void *arg)
 				}
 				pthread_mutex_unlock(infectado->mutex);
 
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[2] = 1;
@@ -328,7 +336,8 @@ void *run_infectado(void *arg)
 			}
 			else
 			{
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
+				printf("INFEC 3 nao conseguiu\n");
 			}
 
 		}
@@ -378,6 +387,8 @@ void *run_laboratorio(void *arg)
 					sem_post(laboratorio->bancada->s_virus_morto);
 					sem_post(laboratorio->bancada->s_injecao);
 					pthread_mutex_unlock(laboratorio->mutex);
+					//printf("LAB 1 dormindo!\n");
+					//sleep(60);
 				}
 
 				//sem_wait(laboratorio->renova_estoque);
@@ -417,6 +428,8 @@ void *run_laboratorio(void *arg)
 					sem_post(laboratorio->bancada->s_insumo_secreto);
 					sem_post(laboratorio->bancada->s_virus_morto);
 					pthread_mutex_unlock(laboratorio->mutex);
+					//printf("LAB 2 dormindo!\n");
+					//sleep(60);
 				}
 			}
 			
@@ -455,6 +468,9 @@ void *run_laboratorio(void *arg)
 					sem_post(laboratorio->bancada->s_injecao);
 					sem_post(laboratorio->bancada->s_insumo_secreto);
 					pthread_mutex_unlock(laboratorio->mutex);
+
+					//printf("LAB 3 dormindo!\n");
+					//sleep(60);
 				}
 				// /sem_wait(laboratorio->renova_estoque);
 				//sem_wait(laboratorio->renova_estoque);
@@ -472,7 +488,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 10;
+	int num_trabalho_minimo = 100;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
