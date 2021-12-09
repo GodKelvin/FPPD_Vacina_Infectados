@@ -4,42 +4,25 @@
 #include <pthread.h>
 #include <unistd.h>
 
-typedef struct Ingrediente Ingrediente;
 typedef struct Bancada Bancada;
 typedef struct Laboratorio Laboratorio;
 typedef struct Infectado Infectado;
 
-struct Ingrediente
-{
-    //0 ou 1
-	int disponivel;
-	Laboratorio* pertence_lab;
-
-};
 
 //A bancada tera dois de cada ingrediente
 struct Bancada
 {
-    //0, 1
-	Ingrediente* virus_morto;
-	Ingrediente* injecao;
-	Ingrediente* insumo_secreto;
 
 	/*
 	Para verificar se determinado ingrediente
 	esta disponivel.
 	*/
+    //Cada semaforo tem dois posicoes
 	sem_t *s_virus_morto;
 	sem_t *s_injecao;
 	sem_t *s_insumo_secreto;
 };
 
-/*
-	Convencao para ingrediente: 
-		1 == virus_morto
-		2 == injecao
-		3 == insumo_secreto
-*/
 struct Laboratorio
 {
 	pthread_t lab_id_proprio;
@@ -51,11 +34,8 @@ struct Laboratorio
 
     //3, 4, 5
 	int *trabalho;
-
     sem_t *renova_estoque;
-
 	Bancada* bancada;
-
 	pthread_mutex_t *mutex;
 	
 };
@@ -116,16 +96,18 @@ void *run_infectado(void *arg)
 		*/
 		while(run_and_work(infectado->trabalho))
 		{
-			printf("1 VIRUS INFEC: %d, %d\n", infectado->bancada->virus_morto[0].disponivel, infectado->bancada->virus_morto[1].disponivel);
+			/*printf("1 VIRUS INFEC: %d, %d\n", infectado->bancada->virus_morto[0].disponivel, infectado->bancada->virus_morto[1].disponivel);
 			printf("1 INJECAO INFEC: %d, %d\n", infectado->bancada->injecao[0].disponivel, infectado->bancada->injecao[1].disponivel);
-			printf("1 INSUMO INFEC: %d, %d\n", infectado->bancada->insumo_secreto[0].disponivel, infectado->bancada->insumo_secreto[1].disponivel);
+			printf("1 INSUMO INFEC: %d, %d\n", infectado->bancada->insumo_secreto[0].disponivel, infectado->bancada->insumo_secreto[1].disponivel);*/
 			/*
 			Espera os dois ingredientes ficarem disponiveis, 
 			ou seja, a garantia de que conseguirei pegar os dois
 			*/
-			sem_wait(infectado->bancada->s_injecao);
-			sem_wait(infectado->bancada->s_insumo_secreto);
-			if(!sem_wait(infectado->bancada->s_injecao) && !sem_wait(infectado->bancada->s_insumo_secreto))
+
+            if((!sem_wait(infectado->bancada->s_injecao[0])) || (!sem_wait(infectado->bancada->s_injecao[1]))
+                && (!sem_wait(infectado->bancada->s_insumo_secreto[0]) || (!sem_wait(infectado->bancada->s_insumo_secreto[1]))))
+
+			if((!sem_wait(infectado->bancada->s_injecao[0])) ||  && !sem_wait(infectado->bancada->s_insumo_secreto))
 			{
 				//Verificar qual injecao secreto pegar
 				pthread_mutex_lock(infectado->mutex);
