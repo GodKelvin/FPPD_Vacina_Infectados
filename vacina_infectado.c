@@ -80,10 +80,13 @@ int run_and_work(int *trabalho)
 	for(int i = 0; i < 6; i++)
 	{
 		//Alguem ainda nao trabalhou o suficiente
+		//printf("============================> pos: %d===========> %d\n", i, trabalho[i]);
 		if(trabalho[i] == 0) return 1;
 	}
 
 	//Todos ja trabalharam o suficiente
+
+	//sleep(1);
 	return 0;
 }
 
@@ -123,54 +126,67 @@ void *run_infectado(void *arg)
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
-					break;
-				}
-				//pthread_mutex_unlock(infectado->mutex);
-				//Aplica a vacina
-				infectado->qtd_vacinas_aplicadas++;
 
-				//Verificar qual injecao foi pega
-				pthread_mutex_lock(infectado->mutex);
-				if(infectado->bancada->injecao[0].disponivel)
-				{	
-					//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
-					infectado->bancada->injecao[0].disponivel = 0;
-					//Informo ao laboratorio que o respectivo ingrediente foi consumido
-					//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-					//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->injecao[1].disponivel = 0;
-					//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
-					//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				}
-				//Verificar qual insumo secreto foi pego
-				if(infectado->bancada->insumo_secreto[0].disponivel)
-				{
-					infectado->bancada->insumo_secreto[0].disponivel = 0;
-					//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
-					//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->insumo_secreto[1].disponivel = 0;
-					//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
-					//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				}
-				pthread_mutex_unlock(infectado->mutex);
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
-				{
-					//Este infectado ja trabalhou o suficiente
-					infectado->trabalho[0] = 1;
-				}
-
-				if(!run_and_work(infectado->trabalho))
-				{
-					printf("INFEC 1 avisando que acabou\n");
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
+					break;
+				}
+				else
+				{
+					//pthread_mutex_unlock(infectado->mutex);
+					//Aplica a vacina
+					infectado->qtd_vacinas_aplicadas++;
+
+					//Verificar qual injecao foi pega
+					pthread_mutex_lock(infectado->mutex);
+					if(infectado->bancada->injecao[0].disponivel)
+					{	
+						//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+						infectado->bancada->injecao[0].disponivel = 0;
+						//Informo ao laboratorio que o respectivo ingrediente foi consumido
+						//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+						//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->injecao[1].disponivel = 0;
+						//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+						//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					}
+					//Verificar qual insumo secreto foi pego
+					if(infectado->bancada->insumo_secreto[0].disponivel)
+					{
+						infectado->bancada->insumo_secreto[0].disponivel = 0;
+						//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+						//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->insumo_secreto[1].disponivel = 0;
+						//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+						//sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					}
+					pthread_mutex_unlock(infectado->mutex);
+					if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+					{
+						//Este infectado ja trabalhou o suficiente
+						printf("INFEC 1 ja trabalhou o suficiente\n");
+						infectado->trabalho[0] = 1;
+
+						if(!run_and_work(infectado->trabalho))
+						{
+							printf("INFEC 1 avisando que acabou\n");
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -204,52 +220,64 @@ void *run_infectado(void *arg)
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
-					break;
-				}
 
-				//Aplica a vacina
-				infectado->qtd_vacinas_aplicadas++;
-
-				//Verificar qual virus_morto foi pego
-				pthread_mutex_lock(infectado->mutex);
-				if(infectado->bancada->virus_morto[0].disponivel)
-				{	
-					printf("INFEC 2 CONSEGUIU!\n");
-					//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
-					infectado->bancada->virus_morto[0].disponivel = 0;
-					//Informo ao laboratorio que o respectivo ingrediente foi consumido
-					//sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->virus_morto[1].disponivel = 0;
-					//sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
-				}
-				//Verificar qual insumo secreto foi pego
-				if(infectado->bancada->insumo_secreto[0].disponivel)
-				{
-					infectado->bancada->insumo_secreto[0].disponivel = 0;
-					//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->insumo_secreto[1].disponivel = 0;
-					//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
-				}
-				pthread_mutex_unlock(infectado->mutex);
-
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
-				{
-					//Este infectado ja trabalhou o suficiente
-					infectado->trabalho[1] = 1;
-				}
-
-				if(!run_and_work(infectado->trabalho))
-				{
-					printf("INFEC 2 avisando que acabou\n");
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
+					break;
+				}
+				else
+				{
+
+					//Aplica a vacina
+					infectado->qtd_vacinas_aplicadas++;
+
+					//Verificar qual virus_morto foi pego
+					pthread_mutex_lock(infectado->mutex);
+					if(infectado->bancada->virus_morto[0].disponivel)
+					{	
+						printf("INFEC 2 CONSEGUIU!\n");
+						//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+						infectado->bancada->virus_morto[0].disponivel = 0;
+						//Informo ao laboratorio que o respectivo ingrediente foi consumido
+						//sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->virus_morto[1].disponivel = 0;
+						//sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					}
+					//Verificar qual insumo secreto foi pego
+					if(infectado->bancada->insumo_secreto[0].disponivel)
+					{
+						infectado->bancada->insumo_secreto[0].disponivel = 0;
+						//sem_wait(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->insumo_secreto[1].disponivel = 0;
+						//sem_wait(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+					}
+					pthread_mutex_unlock(infectado->mutex);
+
+					if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+					{
+						//Este infectado ja trabalhou o suficiente
+						printf("INFEC 2 ja trabalhou o suficiente\n");
+						infectado->trabalho[1] = 1;
+
+						if(!run_and_work(infectado->trabalho))
+						{
+							printf("INFEC 2 avisando que acabou\n");
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -287,48 +315,60 @@ void *run_infectado(void *arg)
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
-					break;
-				}
-	
-				//Verificar qual virus_morto foi pego
-				pthread_mutex_lock(infectado->mutex);
-				if(infectado->bancada->virus_morto[0].disponivel)
-				{	
-					//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
-					infectado->bancada->virus_morto[0].disponivel = 0;
-					//Informo ao laboratorio que o respectivo ingrediente foi consumido
-					//sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->virus_morto[1].disponivel = 0;
-					//sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
-				}
-				//Verificar qual injecao secreto foi pega
-				if(infectado->bancada->injecao[0].disponivel)
-				{
-					infectado->bancada->injecao[0].disponivel = 0;
-					//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
-				}
-				else
-				{
-					infectado->bancada->injecao[1].disponivel = 0;
-					//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
-				}
-				pthread_mutex_unlock(infectado->mutex);
-
-				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
-				{
-					//Este infectado ja trabalhou o suficiente
-					infectado->trabalho[2] = 1;
-				}
-
-				if(!run_and_work(infectado->trabalho))
-				{
-					printf("INFEC 3 avisando que acabou\n");
 					sem_post(infectado->bancada->s_virus_morto);
 					sem_post(infectado->bancada->s_insumo_secreto);
 					sem_post(infectado->bancada->s_injecao);
+					break;
+				}
+				else
+				{
+
+	
+					//Verificar qual virus_morto foi pego
+					pthread_mutex_lock(infectado->mutex);
+					if(infectado->bancada->virus_morto[0].disponivel)
+					{	
+						//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
+						infectado->bancada->virus_morto[0].disponivel = 0;
+						//Informo ao laboratorio que o respectivo ingrediente foi consumido
+						//sem_wait(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->virus_morto[1].disponivel = 0;
+						//sem_wait(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					}
+					//Verificar qual injecao secreto foi pega
+					if(infectado->bancada->injecao[0].disponivel)
+					{
+						infectado->bancada->injecao[0].disponivel = 0;
+						//sem_wait(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					}
+					else
+					{
+						infectado->bancada->injecao[1].disponivel = 0;
+						//sem_wait(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+					}
+					pthread_mutex_unlock(infectado->mutex);
+
+					if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
+					{
+						//Este infectado ja trabalhou o suficiente
+						printf("INFEC 3 ja trabalhou o suficiente\n");
+						infectado->trabalho[2] = 1;
+
+						if(!run_and_work(infectado->trabalho))
+						{
+							printf("INFEC 3 avisando que acabou\n");
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+							sem_post(infectado->bancada->s_virus_morto);
+							sem_post(infectado->bancada->s_insumo_secreto);
+							sem_post(infectado->bancada->s_injecao);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -376,9 +416,15 @@ void *run_laboratorio(void *arg)
 				{
 					printf("LAB 1 avisando que acabou\n");
 					//pthread_mutex_lock(laboratorio->mutex);
+					pthread_mutex_lock(laboratorio->mutex);
+					laboratorio->bancada->virus_morto[0].disponivel = 1;
+					laboratorio->bancada->injecao[0].disponivel = 1;
+					pthread_mutex_unlock(laboratorio->mutex);
+
+					//Avisar que foi estocado
 					sem_post(laboratorio->bancada->s_virus_morto);
 					sem_post(laboratorio->bancada->s_injecao);
-					sem_post(laboratorio->bancada->s_insumo_secreto);
+					break;
 					//pthread_mutex_unlock(laboratorio->mutex);
 					//printf("LAB 1 dormindo!\n");
 					//sleep(60);
@@ -418,9 +464,14 @@ void *run_laboratorio(void *arg)
 				{
 					printf("LAB 2 avisando que acabou\n");
 					//pthread_mutex_lock(laboratorio->mutex);
+					pthread_mutex_lock(laboratorio->mutex);
+					laboratorio->bancada->insumo_secreto[0].disponivel = 1;
+					laboratorio->bancada->virus_morto[1].disponivel = 1;
+					pthread_mutex_unlock(laboratorio->mutex);
+					//Avisar que foi estocado
 					sem_post(laboratorio->bancada->s_insumo_secreto);
 					sem_post(laboratorio->bancada->s_virus_morto);
-					sem_post(laboratorio->bancada->s_injecao);
+					break;
 					//pthread_mutex_unlock(laboratorio->mutex);
 					//printf("LAB 2 dormindo!\n");
 					//sleep(60);
@@ -461,9 +512,16 @@ void *run_laboratorio(void *arg)
 				{
 					printf("LAB 3 avisando que acabou\n");
 					//pthread_mutex_lock(laboratorio->mutex);
+					pthread_mutex_lock(laboratorio->mutex);
+					laboratorio->bancada->injecao[1].disponivel = 1;
+					laboratorio->bancada->insumo_secreto[1].disponivel = 1;
+					pthread_mutex_unlock(laboratorio->mutex);
+					//Avisar que foi estocado
+
 					sem_post(laboratorio->bancada->s_injecao);
 					sem_post(laboratorio->bancada->s_insumo_secreto);
-					sem_post(laboratorio->bancada->s_virus_morto);
+					
+					break;
 					//pthread_mutex_unlock(laboratorio->mutex);
 
 					//printf("LAB 3 dormindo!\n");
