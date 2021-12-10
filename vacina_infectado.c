@@ -106,11 +106,14 @@ void *run_infectado(void *arg)
 			sem_getvalue(infectado->bancada->s_injecao, &qtd_injecao);
 			sem_getvalue(infectado->bancada->s_insumo_secreto, &qtd_insumo_secreto);
 			pthread_mutex_unlock(infectado->mutex);
+
+			sem_wait(infectado->bancada->s_injecao);
+			sem_wait(infectado->bancada->s_insumo_secreto);
 			if((qtd_injecao > 0) && (qtd_insumo_secreto > 0))
 			{
 				//Pegou os dois ingredientes
-				sem_wait(infectado->bancada->s_injecao);
-				sem_wait(infectado->bancada->s_insumo_secreto);
+				//sem_wait(infectado->bancada->s_injecao);
+				//sem_wait(infectado->bancada->s_insumo_secreto);
 
 				//Verificar qual injecao foi pega
 				pthread_mutex_lock(infectado->mutex);
@@ -126,10 +129,10 @@ void *run_infectado(void *arg)
 					infectado->bancada->injecao[1].disponivel = 0;
 					sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 				}
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
 
 				//Verificar qual insumo secreto foi pego
-				pthread_mutex_lock(infectado->mutex);
+				//pthread_mutex_lock(infectado->mutex);
 				if(infectado->bancada->insumo_secreto[0].disponivel)
 				{
 					infectado->bancada->insumo_secreto[0].disponivel = 0;
@@ -145,13 +148,41 @@ void *run_infectado(void *arg)
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
 
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[0] = 1;
 				}
 
-				//if(!run_and_work(infectado->trabalho))
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("-----INFEC 1 AVISANDO A TODOS\n");
+					sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					
+					sem_post(infectado->bancada->s_injecao);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_virus_morto);
+					
+				}
+			}
+			else if(!run_and_work(infectado->trabalho))
+			{
+				printf("-----INFEC 1 AVISANDO A TODOS\n");
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				
+				sem_post(infectado->bancada->s_injecao);
+				sem_post(infectado->bancada->s_insumo_secreto);
+				sem_post(infectado->bancada->s_virus_morto);
 			}
 		}
 	}
@@ -188,10 +219,10 @@ void *run_infectado(void *arg)
 					infectado->bancada->virus_morto[1].disponivel = 0;
 					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
 				}
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
 
 				//Verificar qual insumo secreto foi pego
-				pthread_mutex_lock(infectado->mutex);
+				//pthread_mutex_lock(infectado->mutex);
 				if(infectado->bancada->insumo_secreto[0].disponivel)
 				{
 					infectado->bancada->insumo_secreto[0].disponivel = 0;
@@ -207,11 +238,39 @@ void *run_infectado(void *arg)
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
 
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[1] = 1;
 				}
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("-----INFEC 2 AVISANDO A TODOS\n");
+					sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+					
+					sem_post(infectado->bancada->s_injecao);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_virus_morto);
+					
+				}
+			}
+			else if(!run_and_work(infectado->trabalho))
+			{
+				sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				
+				sem_post(infectado->bancada->s_injecao);
+				sem_post(infectado->bancada->s_insumo_secreto);
+				sem_post(infectado->bancada->s_virus_morto);
 			}
 		}
 	}
@@ -249,9 +308,9 @@ void *run_infectado(void *arg)
 					infectado->bancada->virus_morto[1].disponivel = 0;
 					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
 				}
-				pthread_mutex_unlock(infectado->mutex);
+				//pthread_mutex_unlock(infectado->mutex);
 				//Verificar qual injecao secreto foi pega
-				pthread_mutex_lock(infectado->mutex);
+				//pthread_mutex_lock(infectado->mutex);
 				if(infectado->bancada->injecao[0].disponivel)
 				{
 					infectado->bancada->injecao[0].disponivel = 0;
@@ -272,6 +331,35 @@ void *run_infectado(void *arg)
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[2] = 1;
 				}
+
+				if(!run_and_work(infectado->trabalho))
+				{
+					printf("-----INFEC 3 AVISANDO A TODOS\n");
+					sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+					
+					sem_post(infectado->bancada->s_injecao);
+					sem_post(infectado->bancada->s_insumo_secreto);
+					sem_post(infectado->bancada->s_virus_morto);
+					
+				}
+			}
+			else if(!run_and_work(infectado->trabalho))
+			{
+				sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				
+				sem_post(infectado->bancada->s_injecao);
+				sem_post(infectado->bancada->s_insumo_secreto);
+				sem_post(infectado->bancada->s_virus_morto);
 			}
 		}
 	}
@@ -312,8 +400,49 @@ void *run_laboratorio(void *arg)
 				{
 					laboratorio->trabalho[3] = 1;
 				}
-				sem_wait(laboratorio->renova_estoque);
-				sem_wait(laboratorio->renova_estoque);
+				
+				//Verificando se deve esperar ou avisar a todos q acabou
+				if(!run_and_work(laboratorio->trabalho))
+				{
+					printf("---LAB 1 AVISANDO A TODOS\n");
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				}
+				else
+				{
+					//printf("---LAB 1 ESPERANDO\n");
+					sem_wait(laboratorio->renova_estoque);
+					sem_wait(laboratorio->renova_estoque);
+				}
+			}
+			else if(!run_and_work(laboratorio->trabalho))
+			{
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 		}
@@ -342,11 +471,53 @@ void *run_laboratorio(void *arg)
 				{
 					laboratorio->trabalho[4] = 1;
 				}
+
+				//Verificando se deve esperar ou avisar a todos q acabou
+				if(!run_and_work(laboratorio->trabalho))
+				{
+					printf("---LAB 2 AVISANDO A TODOS\n");
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				}
+				else
+				{
+					//printf("---LAB 2 ESPERANDO\n");
+					sem_wait(laboratorio->renova_estoque);
+					sem_wait(laboratorio->renova_estoque);
+				}
+			}
+			else if(!run_and_work(laboratorio->trabalho))
+			{
+				//printf("---LAB 2 ESPERANDO\n");
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 			
-			sem_wait(laboratorio->renova_estoque);
-			sem_wait(laboratorio->renova_estoque);
 		}
 	}
 	else
@@ -375,8 +546,50 @@ void *run_laboratorio(void *arg)
 				{
 					laboratorio->trabalho[5] = 1;
 				}
-				sem_wait(laboratorio->renova_estoque);
-				sem_wait(laboratorio->renova_estoque);
+				
+				//Verificando se deve esperar ou avisar a todos q acabou
+				if(!run_and_work(laboratorio->trabalho))
+				{
+					printf("---LAB 3 AVISANDO A TODOS\n");
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				}
+				else
+				{
+					//printf("---LAB 2 ESPERANDO\n");
+					sem_wait(laboratorio->renova_estoque);
+					sem_wait(laboratorio->renova_estoque);
+				}
+			}
+			else if(!run_and_work(laboratorio->trabalho))
+			{
+				//printf("---LAB 2 ESPERANDO\n");
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->s_injecao);
+				sem_post(laboratorio->bancada->s_insumo_secreto);
+				sem_post(laboratorio->bancada->s_virus_morto);
+
+				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+				sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 			
@@ -392,7 +605,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 1;
+	int num_trabalho_minimo = 100;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
