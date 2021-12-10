@@ -67,7 +67,7 @@ struct Infectado
 	int qtd_vacinas_aplicadas;
 	int qtd_min_vacinas_aplicadas;
 
-	int pegou_ingrediente;
+	//int pegou_ingrediente;
 
 	/*Vetor de trabalho compartilhado com os laboratorios, 
 	porem, cada um sabe sua posicao*/
@@ -122,12 +122,10 @@ void *run_infectado(void *arg)
 					//Informo que nao esta mais disponivel o respectivo ingrediente deste laboratorio
 					infectado->bancada->injecao[0].disponivel = 0;
 					//Informo ao laboratorio que o respectivo ingrediente foi consumido
-					infectado->pegou_ingrediente = 1;
 					sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 				}
 				else if(infectado->bancada->injecao[1].disponivel)
 				{
-					infectado->pegou_ingrediente = 1;
 					infectado->bancada->injecao[1].disponivel = 0;
 					sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 				}
@@ -135,37 +133,26 @@ void *run_infectado(void *arg)
 
 				//Verificar qual insumo secreto foi pego
 				//pthread_mutex_lock(infectado->mutex);
-				if(infectado->pegou_ingrediente)
+				if(infectado->bancada->insumo_secreto[0].disponivel)
 				{
-					if(infectado->bancada->insumo_secreto[0].disponivel)
-					{
-						infectado->bancada->insumo_secreto[0].disponivel = 0;
-						sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
-					}
-					else
-					{
-						infectado->bancada->insumo_secreto[1].disponivel = 0;
-						sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
-					}
-					
-
-					//Aplica a vacina
-					infectado->qtd_vacinas_aplicadas++;
-					infectado->pegou_ingrediente = 0;
-
-					if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
-					{
-						//Este infectado ja trabalhou o suficiente
-						infectado->trabalho[0] = 1;
-					}
+					infectado->bancada->insumo_secreto[0].disponivel = 0;
+					sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
 				}
 				else
 				{
-					infectado->pegou_ingrediente = 0;
-					sem_wait(infectado->bancada->s_injecao);
-					sem_wait(infectado->bancada->s_insumo_secreto);
+					infectado->bancada->insumo_secreto[1].disponivel = 0;
+					sem_post(infectado->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
 				}
 				pthread_mutex_unlock(infectado->mutex);
+
+				//Aplica a vacina
+				infectado->qtd_vacinas_aplicadas++;
+
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
+				{
+					//Este infectado ja trabalhou o suficiente
+					infectado->trabalho[0] = 1;
+				}
 				
 
 				if(!run_and_work(infectado->trabalho))
@@ -624,7 +611,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 90;
+	int num_trabalho_minimo = 10;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
@@ -715,7 +702,7 @@ int main()
 		infectados[i].bancada = bancada;
 		infectados[i].mutex = &mutex_acesso_ingrediente;
         infectados[i].qtd_min_vacinas_aplicadas = num_trabalho_minimo;
-		infectados[i].pegou_ingrediente = 0;
+		//infectados[i].pegou_ingrediente = 0;
 	}
 
 	for(i = 0, j = 0; i < qtd_ingredientes; i++)
