@@ -437,10 +437,16 @@ void *run_laboratorio(void *arg)
 
 
 //Receber numero de tarefas por parametro
-int main()
+int main(int argc, char *argv[])
 {
+
+	if(argc <= 1)
+	{
+		printf("Forneca a quantidade de trabalho minima\n");
+		return 0;
+	}
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 100000;
+	int num_trabalho_minimo = atoi(argv[1]);
 
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
