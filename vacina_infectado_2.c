@@ -145,7 +145,7 @@ void *run_infectado(void *arg)
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
 
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[0] = 1;
@@ -154,7 +154,7 @@ void *run_infectado(void *arg)
 
 			if(!run_and_work(infectado->trabalho))
 			{
-				printf("-----INFEC 3 AVISANDO A TODOS\n");
+				printf("-----INFEC 1 AVISANDO A TODOS\n");
 				sem_post(infectado->bancada->injecao[0].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->injecao[1].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
@@ -221,7 +221,7 @@ void *run_infectado(void *arg)
 				//Aplica a vacina
 				infectado->qtd_vacinas_aplicadas++;
 
-				if(infectado->qtd_vacinas_aplicadas > infectado->qtd_min_vacinas_aplicadas)
+				if(infectado->qtd_vacinas_aplicadas >= infectado->qtd_min_vacinas_aplicadas)
 				{
 					//Este infectado ja trabalhou o suficiente
 					infectado->trabalho[1] = 1;
@@ -230,7 +230,7 @@ void *run_infectado(void *arg)
 
 			if(!run_and_work(infectado->trabalho))
 			{
-				printf("-----INFEC 3 AVISANDO A TODOS\n");
+				printf("-----INFEC 2 AVISANDO A TODOS\n");
 				sem_post(infectado->bancada->virus_morto[0].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->virus_morto[1].pertence_lab->renova_estoque);
 				sem_post(infectado->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
@@ -380,9 +380,16 @@ void *run_laboratorio(void *arg)
 				}
 				else
 				{
+					//printf("---LAB 1 ESPERANDO\n");
 					sem_wait(laboratorio->renova_estoque);
 					sem_wait(laboratorio->renova_estoque);
 				}
+			}
+			else
+			{
+				//printf("---LAB 2 ESPERANDO\n");
+				sem_wait(laboratorio->renova_estoque);
+				sem_wait(laboratorio->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 		}
@@ -433,9 +440,16 @@ void *run_laboratorio(void *arg)
 				}
 				else
 				{
+					//printf("---LAB 2 ESPERANDO\n");
 					sem_wait(laboratorio->renova_estoque);
 					sem_wait(laboratorio->renova_estoque);
 				}
+			}
+			else
+			{
+				//printf("---LAB 2 ESPERANDO\n");
+				sem_wait(laboratorio->renova_estoque);
+				sem_wait(laboratorio->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 			
@@ -489,9 +503,16 @@ void *run_laboratorio(void *arg)
 				}
 				else
 				{
+					//printf("---LAB 2 ESPERANDO\n");
 					sem_wait(laboratorio->renova_estoque);
 					sem_wait(laboratorio->renova_estoque);
 				}
+			}
+			else
+			{
+				//printf("---LAB 2 ESPERANDO\n");
+				sem_wait(laboratorio->renova_estoque);
+				sem_wait(laboratorio->renova_estoque);
 			}
 			//pthread_mutex_unlock(laboratorio->mutex);
 			
@@ -507,7 +528,7 @@ void *run_laboratorio(void *arg)
 int main()
 {
 	//Quantidade de tarefas (receber por parametro in argv)
-	int num_trabalho_minimo = 1;
+	int num_trabalho_minimo = 5;
 	//Quantidade de infectados, laboratorios e ingredientes
 	int qtd_infectados = 3;
 	int qtd_laboratorios = 3;
