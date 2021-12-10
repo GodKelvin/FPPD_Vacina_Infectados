@@ -311,44 +311,49 @@ void *run_laboratorio(void *arg)
 		while(run_and_work(laboratorio->trabalho))
 		{
 			//Estocar os produtos DESTE lab
-			pthread_mutex_lock(laboratorio->mutex);
-			laboratorio->bancada->virus_morto[0].disponivel = 1;
-			laboratorio->bancada->injecao[0].disponivel = 1;
-			pthread_mutex_unlock(laboratorio->mutex);
-
-			//Avisar que foi estocado
-			sem_post(laboratorio->bancada->s_virus_morto);
-			sem_post(laboratorio->bancada->s_injecao);
-
-			//Renovou estoque
-			laboratorio->qtd_renova_estoque++;
-
-			if(laboratorio->qtd_renova_estoque >= laboratorio->qtd_min_renova_restoque)
+			//if(sem_wait(laboratorio->renova_estoque))
+			if(!laboratorio->bancada->virus_morto[0].disponivel && !laboratorio->bancada->injecao[0].disponivel)
 			{
-				laboratorio->trabalho[3] = 1;
-			}
-			
-			//Verificando se deve esperar ou avisar a todos q acabou
-			if(!run_and_work(laboratorio->trabalho))
-			{
-				//printf("---LAB 1 AVISANDO A TODOS\n");
-				sem_post(laboratorio->bancada->s_injecao);
-				sem_post(laboratorio->bancada->s_insumo_secreto);
+				pthread_mutex_lock(laboratorio->mutex);
+				laboratorio->bancada->virus_morto[0].disponivel = 1;
+				laboratorio->bancada->injecao[0].disponivel = 1;
+				pthread_mutex_unlock(laboratorio->mutex);
+
+				//Avisar que foi estocado
 				sem_post(laboratorio->bancada->s_virus_morto);
+				sem_post(laboratorio->bancada->s_injecao);
 
-				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
-				sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
-				sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
-				sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
-				sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
-				sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				//Renovou estoque
+				laboratorio->qtd_renova_estoque++;
+
+				if(laboratorio->qtd_renova_estoque >= laboratorio->qtd_min_renova_restoque)
+				{
+					laboratorio->trabalho[3] = 1;
+				}
+				
+				//Verificando se deve esperar ou avisar a todos q acabou
+				if(!run_and_work(laboratorio->trabalho))
+				{
+					//printf("---LAB 1 AVISANDO A TODOS\n");
+					sem_post(laboratorio->bancada->s_injecao);
+					sem_post(laboratorio->bancada->s_insumo_secreto);
+					sem_post(laboratorio->bancada->s_virus_morto);
+
+					sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->virus_morto[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->injecao[1].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[0].pertence_lab->renova_estoque);
+					sem_post(laboratorio->bancada->insumo_secreto[1].pertence_lab->renova_estoque);
+				}
+				else
+				{
+					//printf("---LAB 1 ESPERANDO\n");
+					sem_wait(laboratorio->renova_estoque);
+					sem_wait(laboratorio->renova_estoque);
+				}
 			}
-			else
-			{
-				//printf("---LAB 1 ESPERANDO\n");
-				sem_wait(laboratorio->renova_estoque);
-				sem_wait(laboratorio->renova_estoque);
-			}
+		
 		}
 	}
 	else if(laboratorio->lab_id == 1)
@@ -527,7 +532,8 @@ int main()
 		laboratorios[i].lab_id = i;
 		laboratorios[i].qtd_renova_estoque = 0;
 		laboratorios[i].bancada = bancada;
-		laboratorios[i].mutex = &mutex_reestocando_ingrediente;
+		//laboratorios[i].mutex = &mutex_reestocando_ingrediente;
+		laboratorios[i].mutex = &mutex_acesso_ingrediente;
         laboratorios[i].qtd_min_renova_restoque = num_trabalho_minimo;
 	}
 
