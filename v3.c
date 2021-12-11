@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <pthread.h>
-#include <unistd.h>
 
 typedef struct Ingrediente Ingrediente;
 typedef struct Bancada Bancada;
@@ -333,7 +332,7 @@ void *run_laboratorio(void *arg)
 				laboratorio->trabalho[3] = 1;
 			}
 			
-			//Verificando se deve esperar ou avisar a todos que acabou
+			//Verificando se deve esperar ou avisar a todos os labs que acabou
 			if(!run_and_work(laboratorio->trabalho))
 			{
 				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
@@ -372,7 +371,7 @@ void *run_laboratorio(void *arg)
 				laboratorio->trabalho[4] = 1;
 			}
 
-			//Verificando se devo aguarda ou avisar a todos que acabou
+			//Verificando se deve esperar ou avisar a todos os labs que acabou
 			if(!run_and_work(laboratorio->trabalho))
 			{
 				sem_post(laboratorio->bancada->virus_morto[0].pertence_lab->renova_estoque);
@@ -412,7 +411,7 @@ void *run_laboratorio(void *arg)
 				laboratorio->trabalho[5] = 1;
 			}
 			
-			//Verificando se deve esperar ou avisar a todos que acabou
+			//Verificando se deve esperar ou avisar a todos os labs que acabou
 			if(!run_and_work(laboratorio->trabalho))
 			{
 

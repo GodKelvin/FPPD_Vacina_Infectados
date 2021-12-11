@@ -1,12 +1,21 @@
+## Para compilar
 ```
 gcc -Wall -pedantic vacina_infectado.c -pthread -lrt -o exec
+```
+
+```
+Crie o arquivo bash.
+torneo executavel com: chmod +x compile_and_execute.sh
 ```
 
 # FPPD_Vacina_Infectados
 Trabalho realizado durante a disciplina de Fundamentos de Programação Paralela e Distribuída.
 
+## Professor
+Flávio Severiano Lamas
 
-## Descrição
+
+## Descrição do Problema
 Existem 6 processos nesse problema: 3 processos infectados e 3 processos laboratorios.
 
 Cada um dos infectados vai fazer uma vacina e usa-la [o virus é altamente mutavel entao a vacina tem q ser reaplicada a todo momento que for possivel].
