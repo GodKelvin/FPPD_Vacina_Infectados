@@ -55,8 +55,6 @@ struct Laboratorio
 	
 };
 
-
-//----------------Alterar tamanho das variaveis? (long ing, long long int?)
 struct Infectado
 {
 	pthread_t infec_id_proprio;

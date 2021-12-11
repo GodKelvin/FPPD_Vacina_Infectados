@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+//#include <semaphore.h>
+#include <pthread.h>
+
+//Inclusao da minha biblioteca
+#include "vacina.h"
+
 //Receber numero de tarefas por parametro
 int main(int argc, char *argv[])
 {
@@ -52,9 +60,8 @@ int main(int argc, char *argv[])
 
 
 	/*-----CRIANDO SEMAFOROS E MUTEX-----*/
-	pthread_mutex_t mutex_acesso_ingrediente, mutex_reestocando_ingrediente;
+	pthread_mutex_t mutex_acesso_ingrediente;
 	pthread_mutex_init(&mutex_acesso_ingrediente, NULL);
-	pthread_mutex_init(&mutex_reestocando_ingrediente, NULL);
 
 	//Semafaros de acesso aos ingredientes
 	sem_t s_acesso_injecao, s_acesso_virus_morto, s_acesso_insumo;
