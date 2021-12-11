@@ -1,3 +1,5 @@
+v3.c FUNCIONANDO!!
+
 ## Para compilar
 ```
 gcc -Wall -pedantic vacina_infectado.c -pthread -lrt -o exec
