@@ -13,6 +13,14 @@ gcc -Wall -pedantic main.c vacina.c vacina.h -pthread -lrt -o exec
 ```
 
 ## Para rodar os testes
+
+Primeiro, deve tornar o arquivo bash executável (p/Linux)
+```
+chmod a+x run_test.sh
+```
+
+Em seguida, executa-lo informando a quantidade de trabalho mínima.<br>
+(O script bash está configurando para executar 5 mil vezes).
 ```
 ./run_test.sh <qtd_trabalho_minima>
 ```
