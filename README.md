@@ -13,6 +13,9 @@ gcc -Wall -pedantic main.c vacina.c vacina.h -pthread -lrt -o exec
 ```
 
 ## Para rodar os testes
+Para fins de agilidade, criei um script bash para executar diversas vezes o algoritmo, dada a quantidade de trabalho mínima informada. 
+
+Mas claro, o código também pode ser executada da forma original. O script bash em nada impacta nisso.
 
 Primeiro, deve tornar o arquivo bash executável (p/Linux)
 ```
@@ -20,10 +23,30 @@ chmod a+x run_test.sh
 ```
 
 Em seguida, executa-lo informando a quantidade de trabalho mínima.<br>
-(O script bash está configurando para executar 5 mil vezes).
+(O script bash está configurando para executar 500 vezes).
 ```
 ./run_test.sh <qtd_trabalho_minima>
 ```
+
+O print das execuções pode ser encontrado em 
+
+```
+imagens_readme
+```
+
+Cujo formato é: 
+
+```
+Exec_<quantidade_minima_de_trabalho>_<como_foi_executada>_<numero_do_print>
+```
+
+Sendo: 
+
+Quantidade_minima_executada: um inteiro informando a quantidade de trabalho minima daquele print.<br>
+Como_foi_executado: Manual ou Bash<br>
+Numero_do_print: Apenas um identificador da imagem.
+
+<i><b> Há também um print chamado "Exec_multiples_manual", que nada mais é do que a execução do código da forma convencional (não utilizando bash) com vários valores para o trabalho mínimo.</b></i>
 
 
 ## Descrição do Problema
