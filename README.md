@@ -31,7 +31,7 @@ Em seguida, executa-lo informando a quantidade de trabalho mínima.<br>
 O print das execuções pode ser encontrado em 
 
 ```
-imagens_readme
+prints_exec
 ```
 
 Cujo formato é: 
