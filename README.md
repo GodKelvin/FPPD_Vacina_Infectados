@@ -85,3 +85,6 @@ laboratorio 2: 100
 laboratorio 3: 90
 
 [isso é um exemplo de MOLDE e em nenhum momento condiz com a real saída de números esperada]
+
+## Nota
+De 0 a 100, a mesma recebeu nota 100.
